@@ -2,10 +2,7 @@ version: 1
 checksums:
   4188a166aad2705b4f09401f924502ed:
     greeting: e5c4880fef990edc98e20db92aff718d
-    meta/title: 6df48d0da1da5c1108e045fec9ccdb95
-    meta/description: acd639469b6922bfc6a606ee4fc7151f
-    meta/h1: f915e6e52c4dc99671b07e3460972724
-    og/title: 3e78fb22734f51ef8a1b3b3af95e2e5e
-    og/description: acd639469b6922bfc6a606ee4fc7151f
-    twitter/title: 3e78fb22734f51ef8a1b3b3af95e2e5e
-    twitter/description: acd639469b6922bfc6a606ee4fc7151f
+    meta/title: 714b5fa57406e315cbd4ec3ef1cd07ff
+    meta/h1: 714b5fa57406e315cbd4ec3ef1cd07ff
+    og/title: 714b5fa57406e315cbd4ec3ef1cd07ff
+    twitter/title: 714b5fa57406e315cbd4ec3ef1cd07ff

@@ -82,15 +82,20 @@ export function SchemaGenerator({ language, title, description, url }: SchemaGen
   return (
     <div className="space-y-3">
       <div
-        className="flex items-center justify-between cursor-pointer hover:bg-white/5 -mx-2 px-2 py-2 rounded transition-colors"
+        className="flex items-center justify-between cursor-pointer hover:bg-white/5 -mx-2 px-2 py-2 rounded-lg transition-all"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-2">
-          <Code2 className="w-4 h-4 text-white/40" />
-          <span className="text-xs text-white/40 uppercase tracking-wider">Schema Markup</span>
+          <div className="p-1.5 bg-[#a3ff12]/10 rounded">
+            <Code2 className="w-4 h-4 text-[#a3ff12]" />
+          </div>
+          <div>
+            <span className="text-sm font-medium text-white">Schema Markup</span>
+            <p className="text-xs text-white/40">Structured data for search engines</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge className="bg-[#a3ff12]/10 text-[#a3ff12] border-0 text-xs">
+          <Badge className="bg-[#a3ff12]/10 text-[#a3ff12] border-0 text-xs font-medium">
             JSON-LD
           </Badge>
           <button
@@ -98,12 +103,13 @@ export function SchemaGenerator({ language, title, description, url }: SchemaGen
               e.stopPropagation();
               handleCopy();
             }}
-            className="p-1.5 hover:bg-white/10 rounded transition-colors"
+            className="p-1.5 hover:bg-white/10 rounded transition-colors group cursor-pointer"
+            title="Copy schema markup"
           >
             {copied ? (
               <Check className="w-3.5 h-3.5 text-[#a3ff12]" />
             ) : (
-              <Copy className="w-3.5 h-3.5 text-white/40" />
+              <Copy className="w-3.5 h-3.5 text-white/40 group-hover:text-white/60" />
             )}
           </button>
           {isExpanded ? (
@@ -117,36 +123,26 @@ export function SchemaGenerator({ language, title, description, url }: SchemaGen
       {isExpanded && (
         <div className="space-y-3 animate-in slide-in-from-top-2 duration-200">
           {/* Schema Preview */}
-          <div className="bg-[#0a0a0a] rounded-lg border border-white/10 p-3 overflow-x-auto">
+          <div className="bg-[#0a0a0a] rounded-lg border border-white/10 p-4 overflow-x-auto shadow-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-white/50 font-medium">JSON-LD Schema</span>
+              <span className="text-xs text-white/30">{schemaJSON.split('\n').length} lines</span>
+            </div>
             <pre className="text-xs text-white/70 font-mono leading-relaxed">
               <code>{schemaJSON}</code>
             </pre>
           </div>
 
-          {/* Schema Types Included */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-white/5 rounded-lg p-2 border border-white/5">
-              <div className="text-xs text-white/40 mb-1">Organization</div>
-              <div className="text-sm text-white/80">✓</div>
-            </div>
-            <div className="bg-white/5 rounded-lg p-2 border border-white/5">
-              <div className="text-xs text-white/40 mb-1">WebPage</div>
-              <div className="text-sm text-white/80">✓</div>
-            </div>
-            <div className="bg-white/5 rounded-lg p-2 border border-white/5">
-              <div className="text-xs text-white/40 mb-1">Breadcrumb</div>
-              <div className="text-sm text-white/80">✓</div>
-            </div>
-          </div>
-
           {/* Implementation Instructions */}
-          <div className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-3">
-            <div className="flex items-start gap-2">
-              <Code2 className="w-4 h-4 text-blue-400 mt-0.5" />
-              <div className="text-xs text-blue-400/90 leading-relaxed">
-                <p className="font-medium mb-1">How to implement:</p>
-                <p className="text-blue-400/70">
-                  Copy this JSON-LD script and place it in the &lt;head&gt; section of your HTML document for better search engine understanding.
+          <div className="bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="px-2 py-1 bg-blue-500/20 rounded-lg">
+                <Code2 className="w-4 h-4 text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-blue-300 mb-2">How to implement</p>
+                <p className="text-xs text-blue-400/80 leading-relaxed">
+                  Copy this JSON-LD schema and place it in the <code className="px-1.5 py-0.5 bg-blue-500/20 rounded text-blue-300">&lt;head&gt;</code> section of your HTML document. This structured data helps search engines better understand your page content and can enhance your search results with rich snippets.
                 </p>
               </div>
             </div>

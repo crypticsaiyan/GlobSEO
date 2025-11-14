@@ -6,6 +6,13 @@ import { useState } from 'react';
 export function Header() {
   const [theme, setTheme] = useState<'dark'>('dark');
 
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
     <header className="border-b border-white/10 bg-[#0a0a0a] sticky top-0 z-50 backdrop-blur-sm">
       <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
@@ -22,38 +29,33 @@ export function Header() {
           </div>
 
           <nav className="hidden md:flex items-center gap-1">
-            <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/5">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-white/60 hover:text-white hover:bg-white/5 cursor-pointer"
+              onClick={() => scrollToSection('try-it-now')}
+            >
               Get started
             </Button>
-            <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/5">
-              CLI
-            </Button>
-            <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/5">
-              CI/CD
-            </Button>
-            <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/5">
-              SDK
-            </Button>
-            <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/5 gap-2">
-              API
-              <Badge className="bg-[#a3ff12] text-black text-xs px-1.5 py-0 h-5">new</Badge>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-white/60 hover:text-white hover:bg-white/5 gap-2 cursor-pointer"
+              onClick={() => scrollToSection('features')}
+            >
+              Features
+              <Badge className="bg-[#a3ff12] text-black text-xs px-1.5 py-0 h-5">AI</Badge>
             </Button>
           </nav>
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/5 hidden md:flex">
-            en
-          </Button>
-          <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/5 gap-2 hidden md:flex">
+          <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/5 gap-2 hidden md:flex cursor-pointer">
             <Github className="w-4 h-4" />
-            <span className="text-xs">Github</span>
+            <span className="text-sm">Github</span>
           </Button>
-          <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/5">
+          <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/5 cursor-pointer">
             <Sun className="w-4 h-4" />
-          </Button>
-          <Button size="sm" className="bg-white/10 hover:bg-white/20 text-white border-0">
-            Platform
           </Button>
         </div>
       </div>

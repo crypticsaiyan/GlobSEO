@@ -36,7 +36,8 @@ export function SmartRewriteSuggestions({ smartRewrites }: SmartRewriteSuggestio
     <div className="space-y-4">
       {titleSuggestions.length > 0 && (
         <div className="space-y-2">
-          <label className="text-xs text-white/50">Title Variations</label>
+          <label className="text-sm text-white/50">Title Variations</label>
+          <br />
           <div className="space-y-2">
             {titleSuggestions.map((suggestion, index) => (
               <div key={index} className="flex items-start gap-2 bg-[#0a0a0a] rounded-lg p-3 border border-white/5 hover:border-[#a3ff12]/30 transition-colors group">
@@ -47,7 +48,7 @@ export function SmartRewriteSuggestions({ smartRewrites }: SmartRewriteSuggestio
                     {suggestion.length >= 50 && suggestion.length <= 60 && (<span className="text-xs text-[#a3ff12]">✓ Optimal length</span>)}
                   </div>
                 </div>
-                <button onClick={() => handleCopy(suggestion, `title-${index}`)} className="p-1.5 hover:bg-white/10 rounded transition-colors opacity-0 group-hover:opacity-100">
+                <button onClick={() => handleCopy(suggestion, `title-${index}`)} className="p-1.5 hover:bg-white/10 rounded transition-colors opacity-0 group-hover:opacity-100 cursor-pointer">
                   {copiedSuggestion === `title-${index}` ? (<Check className="w-3.5 h-3.5 text-[#a3ff12]" />) : (<Copy className="w-3.5 h-3.5 text-white/40" />)}
                 </button>
               </div>
@@ -57,7 +58,8 @@ export function SmartRewriteSuggestions({ smartRewrites }: SmartRewriteSuggestio
       )}
       {descriptionSuggestions.length > 0 && (
         <div className="space-y-2">
-          <label className="text-xs text-white/50">Description Variations</label>
+          <label className="text-sm text-white/50">Description Variations</label>
+          <br />
           <div className="space-y-2">
             {descriptionSuggestions.map((suggestion, index) => (
               <div key={index} className="flex items-start gap-2 bg-[#0a0a0a] rounded-lg p-3 border border-white/5 hover:border-[#a3ff12]/30 transition-colors group">
@@ -68,7 +70,7 @@ export function SmartRewriteSuggestions({ smartRewrites }: SmartRewriteSuggestio
                     {suggestion.length >= 120 && suggestion.length <= 155 && (<span className="text-xs text-[#a3ff12]">✓ Optimal length</span>)}
                   </div>
                 </div>
-                <button onClick={() => handleCopy(suggestion, `desc-${index}`)} className="p-1.5 hover:bg-white/10 rounded transition-colors opacity-0 group-hover:opacity-100">
+                <button onClick={() => handleCopy(suggestion, `desc-${index}`)} className="p-1.5 hover:bg-white/10 rounded transition-colors opacity-0 group-hover:opacity-100 cursor-pointer">
                   {copiedSuggestion === `desc-${index}` ? (<Check className="w-3.5 h-3.5 text-[#a3ff12]" />) : (<Copy className="w-3.5 h-3.5 text-white/40" />)}
                 </button>
               </div>

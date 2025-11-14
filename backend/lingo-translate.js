@@ -161,6 +161,14 @@ async function processMetadataTranslations(metadata, targetLanguages) {
   const translations = {};
   const sourceLang = metadata.lang || 'en';
 
+  // Filter out source language from targets
+  const actualTargets = targetLanguages.filter(lang => lang !== sourceLang);
+  
+  if (actualTargets.length === 0) {
+    console.log('⏭️  No translations needed (all languages same as source)');
+    return translations;
+  }
+
   // Prepare ONLY metadata fields for translation - NOT content
   // This ensures website content is never translated, only SEO metadata
   const translationContent = {
@@ -180,26 +188,68 @@ async function processMetadataTranslations(metadata, targetLanguages) {
     }
   };
 
-  // Translate to each target language
-  for (const targetLang of targetLanguages) {
-    if (targetLang === sourceLang) {
-      translations[targetLang] = translationContent;
-      console.log(`⏭️  Skipping ${targetLang} (same as source)`);
-      continue;
+  try {
+    // Setup i18n.json config with ALL target languages at once
+    console.log(`🔧 Setting up Lingo.dev config for languages: ${actualTargets.join(', ')}`);
+    setupI18nConfig(sourceLang, actualTargets);
+
+    // Write source file ONCE
+    const sourceFile = path.join(I18N_DIR, `${sourceLang}.json`);
+    if (!fs.existsSync(I18N_DIR)) {
+      fs.mkdirSync(I18N_DIR, { recursive: true });
+    }
+    
+    let existingContent = {};
+    if (fs.existsSync(sourceFile)) {
+      existingContent = JSON.parse(fs.readFileSync(sourceFile, 'utf8'));
+    }
+    
+    const mergedContent = {
+      ...existingContent,
+      ...translationContent
+    };
+    
+    fs.writeFileSync(sourceFile, JSON.stringify(mergedContent, null, 2));
+    console.log(`📝 Wrote source content to ${sourceLang}.json`);
+
+    // Run Lingo.dev CLI ONCE for all languages
+    console.log(`🔄 Running Lingo.dev translation (this runs ONCE for all ${actualTargets.length} languages)...`);
+    
+    try {
+      execSync('npx lingo.dev@latest run', {
+        cwd: FRONTEND_DIR,
+        stdio: 'inherit', // Show output in real-time
+        env: { ...process.env }
+      });
+      
+    } catch (execError) {
+      console.error(`❌ Lingo CLI execution failed: ${execError.message}`);
+      throw execError;
     }
 
-    try {
-      console.log(`🔄 Starting translation to ${targetLang}...`);
-      const translated = await translateWithLingo(
-        translationContent,
-        sourceLang,
-        targetLang
-      );
+    // Read all translated files AFTER single run
+    for (const targetLang of actualTargets) {
+      const targetFile = path.join(I18N_DIR, `${targetLang}.json`);
       
-      translations[targetLang] = translated;
-      console.log(`✅ Translation to ${targetLang} completed`);
-    } catch (error) {
-      console.error(`❌ Failed to translate to ${targetLang}:`, error.message);
+      if (fs.existsSync(targetFile)) {
+        const translated = JSON.parse(fs.readFileSync(targetFile, 'utf8'));
+        translations[targetLang] = translated;
+        console.log(`✅ Translation to ${targetLang} completed`);
+      } else {
+        console.warn(`⚠️  Translation file for ${targetLang} not found`);
+        translations[targetLang] = {
+          ...translationContent,
+          _error: `Translation file not generated`
+        };
+      }
+    }
+
+    console.log(`✅ All translations complete in single run`);
+    
+  } catch (error) {
+    console.error(`❌ Translation process failed: ${error.message}`);
+    // Return empty translations on error
+    for (const targetLang of actualTargets) {
       translations[targetLang] = {
         ...translationContent,
         _error: `Translation failed: ${error.message}`

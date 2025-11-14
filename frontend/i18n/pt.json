@@ -1,0 +1,17 @@
+{
+  "greeting": "Olá do Lingo.dev",
+  "meta": {
+    "title": "Domínio de exemplo",
+    "description": "",
+    "keywords": "",
+    "h1": "Domínio de exemplo"
+  },
+  "og": {
+    "title": "Domínio de exemplo",
+    "description": ""
+  },
+  "twitter": {
+    "title": "Domínio de exemplo",
+    "description": ""
+  }
+}

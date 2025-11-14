@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Copy, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Copy, Check, ChevronDown, ChevronUp, Code2, FileJson } from 'lucide-react';
 import { Badge } from '../components/ui/badge';
 import { SchemaGenerator } from './SchemaGenerator';
 import { SocialCardPreview } from './SocialCardPreview';
@@ -146,10 +146,10 @@ export function LanguageResultsCard({ language, metadata, seoScore, translations
         {/* SEO Title */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-white/40 uppercase tracking-wider">SEO Title</span>
+            <span className="text-sm text-white/40 uppercase tracking-wider">SEO Title</span>
             <button
               onClick={() => handleCopy(title, 'title')}
-              className="p-1.5 hover:bg-white/10 rounded transition-colors"
+              className="p-1.5 hover:bg-white/10 rounded transition-colors cursor-pointer"
             >
               {copied === `${language}-title` ? (
                 <Check className="w-3.5 h-3.5 text-[#a3ff12]" />
@@ -166,10 +166,10 @@ export function LanguageResultsCard({ language, metadata, seoScore, translations
         {/* Meta Description */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-white/40 uppercase tracking-wider">Meta Description</span>
+            <span className="text-sm text-white/40 uppercase tracking-wider">Meta Description</span>
             <button
               onClick={() => handleCopy(description, 'description')}
-              className="p-1.5 hover:bg-white/10 rounded transition-colors"
+              className="p-1.5 hover:bg-white/10 rounded transition-colors cursor-pointer"
             >
               {copied === `${language}-description` ? (
                 <Check className="w-3.5 h-3.5 text-[#a3ff12]" />
@@ -186,10 +186,10 @@ export function LanguageResultsCard({ language, metadata, seoScore, translations
         {/* Keywords */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-white/40 uppercase tracking-wider">Keywords</span>
+            <span className="text-sm text-white/40 uppercase tracking-wider">Keywords</span>
             <button
               onClick={() => handleCopy(keywords, 'keywords')}
-              className="p-1.5 hover:bg-white/10 rounded transition-colors"
+              className="p-1.5 hover:bg-white/10 rounded transition-colors cursor-pointer"
             >
               {copied === `${language}-keywords` ? (
                 <Check className="w-3.5 h-3.5 text-[#a3ff12]" />
@@ -204,7 +204,7 @@ export function LanguageResultsCard({ language, metadata, seoScore, translations
                 <Badge
                   key={index}
                   variant="secondary"
-                  className="bg-white/5 text-white/70 border-0 hover:bg-white/10 transition-colors text-xs"
+                  className="bg-white/5 text-white/70 border-0 hover:bg-white/10 transition-colors text-sm"
                 >
                   {keyword}
                 </Badge>
@@ -239,22 +239,34 @@ export function LanguageResultsCard({ language, metadata, seoScore, translations
         {/* Collapsible HTML Meta Tags */}
         <div className="border-t border-white/5 pt-4">
           <div
-            className="flex items-center justify-between cursor-pointer hover:bg-white/5 -mx-2 px-2 py-2 rounded transition-colors"
+            className="flex items-center justify-between cursor-pointer hover:bg-white/5 -mx-2 px-2 py-2 rounded-lg transition-all"
             onClick={() => toggleSection('html')}
           >
-            <span className="text-xs text-white/40 uppercase tracking-wider">HTML Meta Tags</span>
             <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-orange-500/10 rounded">
+                <Code2 className="w-4 h-4 text-orange-400" />
+              </div>
+              <div>
+                <span className="text-sm font-medium text-white">HTML Meta Tags</span>
+                <p className="text-xs text-white/40">Copy-paste ready meta tags</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge className="bg-orange-500/10 text-orange-400 border-0 text-xs font-medium">
+                HTML
+              </Badge>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleCopy(htmlMeta, 'html');
                 }}
-                className="p-1.5 hover:bg-white/10 rounded transition-colors"
+                className="p-1.5 hover:bg-white/10 rounded transition-colors group cursor-pointer"
+                title="Copy HTML meta tags"
               >
                 {copied === `${language}-html` ? (
                   <Check className="w-3.5 h-3.5 text-[#a3ff12]" />
                 ) : (
-                  <Copy className="w-3.5 h-3.5 text-white/40" />
+                  <Copy className="w-3.5 h-3.5 text-white/40 group-hover:text-white/60" />
                 )}
               </button>
               {expandedSections.has('html') ? (
@@ -265,7 +277,11 @@ export function LanguageResultsCard({ language, metadata, seoScore, translations
             </div>
           </div>
           {expandedSections.has('html') && (
-            <div className="mt-2 bg-[#0a0a0a] rounded-lg border border-white/10 p-3 overflow-x-auto animate-in slide-in-from-top-2 duration-200">
+            <div className="mt-2 bg-[#0a0a0a] rounded-lg border border-white/10 p-4 overflow-x-auto animate-in slide-in-from-top-2 duration-200 shadow-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-white/50 font-medium">Meta Tags</span>
+                <span className="text-xs text-white/30">{htmlMeta.split('\n').length} tags</span>
+              </div>
               <pre className="text-xs text-white/70 font-mono leading-relaxed">
                 <code>{htmlMeta}</code>
               </pre>
@@ -276,22 +292,34 @@ export function LanguageResultsCard({ language, metadata, seoScore, translations
         {/* Collapsible JSON Output */}
         <div>
           <div
-            className="flex items-center justify-between cursor-pointer hover:bg-white/5 -mx-2 px-2 py-2 rounded transition-colors"
+            className="flex items-center justify-between cursor-pointer hover:bg-white/5 -mx-2 px-2 py-2 rounded-lg transition-all"
             onClick={() => toggleSection('json')}
           >
-            <span className="text-xs text-white/40 uppercase tracking-wider">JSON Output</span>
             <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-cyan-500/10 rounded">
+                <FileJson className="w-4 h-4 text-cyan-400" />
+              </div>
+              <div>
+                <span className="text-sm font-medium text-white">JSON Output</span>
+                <p className="text-xs text-white/40">Structured data export</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge className="bg-cyan-500/10 text-cyan-400 border-0 text-xs font-medium">
+                JSON
+              </Badge>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleCopy(JSON.stringify(jsonOutput, null, 2), 'json');
                 }}
-                className="p-1.5 hover:bg-white/10 rounded transition-colors"
+                className="p-1.5 hover:bg-white/10 rounded transition-colors group cursor-pointer"
+                title="Copy JSON output"
               >
                 {copied === `${language}-json` ? (
                   <Check className="w-3.5 h-3.5 text-[#a3ff12]" />
                 ) : (
-                  <Copy className="w-3.5 h-3.5 text-white/40" />
+                  <Copy className="w-3.5 h-3.5 text-white/40 group-hover:text-white/60" />
                 )}
               </button>
               {expandedSections.has('json') ? (
@@ -302,7 +330,11 @@ export function LanguageResultsCard({ language, metadata, seoScore, translations
             </div>
           </div>
           {expandedSections.has('json') && (
-            <div className="mt-2 bg-[#0a0a0a] rounded-lg border border-white/10 p-3 overflow-x-auto animate-in slide-in-from-top-2 duration-200">
+            <div className="mt-2 bg-[#0a0a0a] rounded-lg border border-white/10 p-4 overflow-x-auto animate-in slide-in-from-top-2 duration-200 shadow-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-white/50 font-medium">JSON Data</span>
+                <span className="text-xs text-white/30">{Object.keys(jsonOutput).length} fields</span>
+              </div>
               <pre className="text-xs text-white/70 font-mono leading-relaxed">
                 <code>{JSON.stringify(jsonOutput, null, 2)}</code>
               </pre>

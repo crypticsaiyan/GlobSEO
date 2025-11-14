@@ -102,16 +102,21 @@ export function SocialCardPreview({ language, title, description, url, imageUrl 
   return (
     <div className="space-y-3">
       <div
-        className="flex items-center justify-between cursor-pointer hover:bg-white/5 -mx-2 px-2 py-2 rounded transition-colors"
+        className="flex items-center justify-between cursor-pointer hover:bg-white/5 -mx-2 px-2 py-2 rounded-lg transition-all"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-2">
-          <Share2 className="w-4 h-4 text-white/40" />
-          <span className="text-xs text-white/40 uppercase tracking-wider">Social Preview</span>
+          <div className="p-1.5 bg-purple-500/10 rounded">
+            <Share2 className="w-4 h-4 text-purple-400" />
+          </div>
+          <div>
+            <span className="text-sm font-medium text-white">Social Preview</span>
+            <p className="text-xs text-white/40">Platform-specific card previews</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge className="bg-white/5 text-white/60 border-0 text-xs">
-            {getLanguageFlag(language)} {language}
+          <Badge className="bg-purple-500/10 text-purple-400 border-0 text-xs font-medium">
+            {previewType.charAt(0).toUpperCase() + previewType.slice(1)}
           </Badge>
           {isExpanded ? (
             <ChevronUp className="w-4 h-4 text-white/40" />
@@ -127,40 +132,58 @@ export function SocialCardPreview({ language, title, description, url, imageUrl 
           <div className="flex gap-2">
             <button
               onClick={() => setPreviewType('twitter')}
-              className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 previewType === 'twitter'
-                  ? 'bg-[#1DA1F2] text-white shadow-lg shadow-[#1DA1F2]/20'
-                  : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10 hover:text-white/80'
+                  ? 'bg-white/10 text-white scale-105 shadow-lg'
+                  : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/70 hover:scale-[1.02]'
               }`}
             >
-              Twitter/X
+              <span 
+                className="font-bold"
+                style={previewType === 'twitter' ? { color: '#1DA1F2' } : {}}
+              >
+                𝕏
+              </span>
+              Twitter
             </button>
             <button
               onClick={() => setPreviewType('facebook')}
-              className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 previewType === 'facebook'
-                  ? 'bg-[#1877F2] text-white shadow-lg shadow-[#1877F2]/20'
-                  : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10 hover:text-white/80'
+                  ? 'bg-white/10 text-white scale-105 shadow-lg'
+                  : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/70 hover:scale-[1.02]'
               }`}
             >
+              <span 
+                className="font-bold"
+                style={previewType === 'facebook' ? { color: '#1877F2' } : {}}
+              >
+                f
+              </span>
               Facebook
             </button>
             <button
               onClick={() => setPreviewType('linkedin')}
-              className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 previewType === 'linkedin'
-                  ? 'bg-[#0A66C2] text-white shadow-lg shadow-[#0A66C2]/20'
-                  : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10 hover:text-white/80'
+                  ? 'bg-white/10 text-white scale-105 shadow-lg'
+                  : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/70 hover:scale-[1.02]'
               }`}
             >
+              <span 
+                className="font-bold"
+                style={previewType === 'linkedin' ? { color: '#0A66C2' } : {}}
+              >
+                in
+              </span>
               LinkedIn
             </button>
           </div>
 
           {/* Preview Card */}
-          <div className="bg-[#0a0a0a] rounded-lg border border-white/10 overflow-hidden">
+          <div className="bg-[#0a0a0a] rounded-lg border border-white/10 overflow-hidden shadow-lg">
             {/* Image Preview - Reduced size */}
-            <div className="aspect-[2.5/1] bg-gradient-to-br from-[#a3ff12]/20 via-[#a3ff12]/5 to-transparent relative overflow-hidden">
+            <div className="aspect-[2.5/1] bg-gradient-to-br from-white/5 to-white/[0.02] relative overflow-hidden">
               {imageUrl ? (
                 <img 
                   src={imageUrl} 
@@ -175,99 +198,102 @@ export function SocialCardPreview({ language, title, description, url, imageUrl 
               {!imageUrl && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
-                    <div className="w-12 h-12 rounded-xl bg-[#a3ff12]/20 flex items-center justify-center mx-auto mb-2">
-                      <span className="text-2xl">{getLanguageFlag(language)}</span>
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 flex items-center justify-center mx-auto mb-3 border border-purple-500/20">
+                      <Monitor className="w-8 h-8 text-purple-400/60" />
                     </div>
-                    <div className="text-xl font-bold text-white/20">{domain}</div>
+                    <div className="text-lg font-semibold text-white/30 mb-1">{domain}</div>
                     {previewType === 'twitter' && (
-                      <div className="text-xs text-white/10 mt-1">{twitterHandle}</div>
+                      <div className="text-sm text-white/20">{twitterHandle}</div>
                     )}
                   </div>
                 </div>
               )}
               
-              {/* Preview overlay */}
-              <div className="absolute top-2 right-2 flex gap-2">
-                <div className="bg-black/50 backdrop-blur-sm rounded px-2 py-1 text-xs text-white/80 flex items-center gap-1">
-                  <Monitor className="w-3 h-3" />
-                  Desktop
-                </div>
-              </div>
-
-              {/* Platform-specific badges */}
-              <div className="absolute bottom-2 left-2">
-                <Badge className={`text-xs ${
-                  previewType === 'twitter' ? 'bg-[#1DA1F2]/20 text-[#1DA1F2] border-[#1DA1F2]/30' :
-                  previewType === 'facebook' ? 'bg-[#1877F2]/20 text-[#1877F2] border-[#1877F2]/30' :
-                  'bg-[#0A66C2]/20 text-[#0A66C2] border-[#0A66C2]/30'
-                } border`}>
-                  {previewType === 'twitter' ? 'Twitter/X' : previewType === 'facebook' ? 'Facebook' : 'LinkedIn'}
+              {/* Platform-specific badge */}
+              <div className="absolute top-3 right-3">
+                <Badge className={`text-xs font-medium ${
+                  previewType === 'twitter' ? 'bg-[#1DA1F2] text-white border-0' :
+                  previewType === 'facebook' ? 'bg-[#1877F2] text-white border-0' :
+                  'bg-[#0A66C2] text-white border-0'
+                } shadow-lg`}>
+                  {previewType === 'twitter' ? '𝕏' : previewType === 'facebook' ? 'f' : 'in'}
                 </Badge>
               </div>
             </div>
 
             {/* Card Content */}
-            <div className="p-3 space-y-2">
-              <div className="text-xs text-white/40 uppercase">{domain}</div>
-              <div className="text-sm font-medium text-white/90 line-clamp-2">
+            <div className="p-4 space-y-2.5">
+              <div className="text-xs text-white/40 font-medium uppercase tracking-wide">{domain}</div>
+              <div className="text-base font-semibold text-white/90 line-clamp-2 leading-snug">
                 {truncatedTitle}
               </div>
-              <div className="text-xs text-white/60 line-clamp-2">
+              <div className="text-sm text-white/60 line-clamp-2 leading-relaxed">
                 {truncatedDescription}
               </div>
               
               {/* Platform-specific metadata */}
-              <div className="flex items-center gap-2 pt-1 border-t border-white/5">
-                <div className="text-[10px] text-white/30">
-                  {previewType === 'twitter' && `${truncatedTitle.length}/${limits.title} chars`}
-                  {previewType === 'facebook' && 'Facebook Link Preview'}
+              <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                <div className="text-xs text-white/30">
+                  {previewType === 'twitter' && `${truncatedTitle.length}/${limits.title} • ${truncatedDescription.length}/${limits.description}`}
+                  {previewType === 'facebook' && 'Link Preview'}
                   {previewType === 'linkedin' && 'Article Preview'}
+                </div>
+                <div className="text-xs text-white/20">
+                  {getLanguageFlag(language)}
                 </div>
               </div>
             </div>
           </div>
 
           {/* Social Meta Tags */}
-          <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-xs text-white/40 uppercase tracking-wider">
-                Generated Meta Tags
+          <div className="bg-gradient-to-r from-purple-500/10 via-purple-500/5 to-transparent rounded-lg p-4 border border-purple-500/20">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-purple-500/20 rounded">
+                  <Copy className="w-3.5 h-3.5 text-purple-400" />
+                </div>
+                <div className="text-sm font-medium text-purple-300">Meta Tags for {previewType.charAt(0).toUpperCase() + previewType.slice(1)}</div>
               </div>
               <button
                 onClick={handleCopyMetaTags}
-                className="p-1.5 hover:bg-white/10 rounded transition-colors"
+                className="p-1.5 hover:bg-purple-500/20 rounded transition-colors group cursor-pointer"
+                title="Copy meta tags"
               >
                 {copied ? (
                   <Check className="w-3.5 h-3.5 text-[#a3ff12]" />
                 ) : (
-                  <Copy className="w-3.5 h-3.5 text-white/40" />
+                  <Copy className="w-3.5 h-3.5 text-purple-400/60 group-hover:text-purple-400" />
                 )}
               </button>
             </div>
-            <div className="bg-[#0a0a0a] rounded p-2 overflow-x-auto">
-              <pre className="text-xs text-white/60 font-mono leading-relaxed">
+            <div className="bg-[#0a0a0a] rounded-lg p-3 overflow-x-auto border border-white/10">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-white/50 font-medium">Generated Tags</span>
+                <span className="text-xs text-white/30">{getMetaTags().split('\n').length} tags</span>
+              </div>
+              <pre className="text-xs text-white/70 font-mono leading-relaxed">
                 <code>{getMetaTags()}</code>
               </pre>
             </div>
             
             {/* Character count warnings */}
-            <div className="mt-2 space-y-1">
+            <div className="mt-3 space-y-1.5">
               {title.length > limits.title && (
-                <div className="text-xs text-orange-400/80 flex items-center gap-1">
+                <div className="text-xs text-orange-400 flex items-center gap-1.5 bg-orange-500/10 rounded px-2 py-1.5 border border-orange-500/20">
                   <span>⚠</span>
                   <span>Title exceeds {previewType} limit ({title.length}/{limits.title} chars)</span>
                 </div>
               )}
               {description.length > limits.description && (
-                <div className="text-xs text-orange-400/80 flex items-center gap-1">
+                <div className="text-xs text-orange-400 flex items-center gap-1.5 bg-orange-500/10 rounded px-2 py-1.5 border border-orange-500/20">
                   <span>⚠</span>
                   <span>Description exceeds {previewType} limit ({description.length}/{limits.description} chars)</span>
                 </div>
               )}
               {title.length <= limits.title && description.length <= limits.description && (
-                <div className="text-xs text-[#a3ff12]/80 flex items-center gap-1">
+                <div className="text-xs text-[#a3ff12] flex items-center gap-1.5 bg-[#a3ff12]/10 rounded px-2 py-1.5 border border-[#a3ff12]/20">
                   <span>✓</span>
-                  <span>Meta tags are within {previewType} character limits</span>
+                  <span>All content within {previewType} character limits</span>
                 </div>
               )}
             </div>

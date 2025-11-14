@@ -394,6 +394,26 @@
     color: var(--foreground);
   }
 
+  /* --- Brand selection and caret colors (custom) --- */
+  :root { --brand: #a3ff12; }
+  ::selection { background: var(--brand); color: #0a0a0a; }
+  ::-moz-selection { background: var(--brand); color: #0a0a0a; }
+  input, textarea, select, [contenteditable="true"] { caret-color: var(--brand); }
+  /* Ensure selection highlight also works inside form fields */
+  input::selection,
+  textarea::selection,
+  select::selection,
+  [contenteditable="true"]::selection { background: var(--brand); color: #0a0a0a; }
+  input::-moz-selection,
+  textarea::-moz-selection,
+  select::-moz-selection,
+  [contenteditable="true"]::-moz-selection { background: var(--brand); color: #0a0a0a; }
+  /* Higher-specificity override for shadcn input utility classes */
+  input[data-slot="input"]::selection { background: var(--brand) !important; color: #0a0a0a !important; }
+  input[data-slot="input"]::-moz-selection { background: var(--brand) !important; color: #0a0a0a !important; }
+  textarea[data-slot="textarea"]::selection { background: var(--brand) !important; color: #0a0a0a !important; }
+  textarea[data-slot="textarea"]::-moz-selection { background: var(--brand) !important; color: #0a0a0a !important; }
+
   :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) h1 {
     font-size: var(--text-2xl);
     font-weight: var(--font-weight-medium);
@@ -2199,8 +2219,9 @@
   --card-foreground: oklch(.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(.145 0 0);
-  --primary: #030213;
-  --primary-foreground: oklch(1 0 0);
+  /* Set primary to brand green so selection utilities and component tokens use it */
+  --primary: #a3ff12;
+  --primary-foreground: #0a0a0a;
   --secondary: oklch(.95 .0058 264.53);
   --secondary-foreground: #030213;
   --muted: #ececf0;

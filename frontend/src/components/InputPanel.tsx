@@ -45,7 +45,7 @@ export function InputPanel({ onGenerate, isGenerating, selectedLanguages, setSel
 
       <div className="space-y-5">
         <div>
-          <label className="block text-sm text-white/50 mb-2.5">
+          <label className="block text-base text-white/50 mb-2.5">
             Webpage URL *
           </label>
           <Input
@@ -54,12 +54,12 @@ export function InputPanel({ onGenerate, isGenerating, selectedLanguages, setSel
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             required
-            className="bg-[#0a0a0a] border-white/10 focus:border-[#a3ff12]/50 focus:ring-[#a3ff12]/20 text-white placeholder:text-white/30 h-11 transition-all"
+            className="bg-[#0a0a0a] border-white/10 focus:border-[#a3ff12]/50 focus:ring-[#a3ff12]/20 text-white placeholder:text-white/30 h-11 transition-all text-sm"
           />
         </div>
 
         <div>
-          <label className="block text-sm text-white/50 mb-2.5">
+          <label className="block text-white/50 mb-2.5 text-base">
             Primary Keyword (Optional)
           </label>
           <Input
@@ -67,12 +67,12 @@ export function InputPanel({ onGenerate, isGenerating, selectedLanguages, setSel
             placeholder="e.g., SEO optimization, web development"
             value={primaryKeyword}
             onChange={(e) => setPrimaryKeyword(e.target.value)}
-            className="bg-[#0a0a0a] border-white/10 focus:border-[#a3ff12]/50 focus:ring-[#a3ff12]/20 text-white placeholder:text-white/30 h-11 transition-all"
+            className="bg-[#0a0a0a] border-white/10 focus:border-[#a3ff12]/50 focus:ring-[#a3ff12]/20 text-white placeholder:text-white/30 h-11 transition-all text-sm"
           />
         </div>
 
         <div>
-          <label className="block text-sm text-white/50 mb-3">
+          <label className="block text-base text-white/50 mb-3">
             Target Languages
           </label>
           <div className="flex flex-wrap gap-2">
@@ -80,9 +80,9 @@ export function InputPanel({ onGenerate, isGenerating, selectedLanguages, setSel
               <Badge
                 key={lang}
                 variant={selectedLanguages.includes(lang) ? "default" : "outline"}
-                className={`cursor-pointer transition-all ${
+                className={`cursor-pointer transition-all text-sm ${
                   selectedLanguages.includes(lang)
-                    ? 'bg-[#a3ff12] text-black hover:bg-[#92e610] shadow-lg shadow-[#a3ff12]/20'
+                    ? 'bg-[#a3ff12] text-black hover:bg-[#92e610]'
                     : 'bg-transparent border-white/20 text-white/60 hover:border-white/40 hover:text-white/80'
                 }`}
                 onClick={() => toggleLanguage(lang)}
@@ -99,7 +99,7 @@ export function InputPanel({ onGenerate, isGenerating, selectedLanguages, setSel
         <Button
           type="submit"
           disabled={isGenerating || !url.trim()}
-          className="w-full bg-[#a3ff12] hover:bg-[#92e610] text-black h-12 rounded-lg transition-all duration-300 disabled:opacity-50 shadow-lg shadow-[#a3ff12]/20 hover:shadow-xl hover:shadow-[#a3ff12]/30"
+          className="w-full bg-[#a3ff12] hover:bg-[#92e610] text-black h-12 rounded-lg transition-all duration-300 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
         >
           {isGenerating ? (
             <div className="flex items-center gap-2">

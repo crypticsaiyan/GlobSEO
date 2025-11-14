@@ -1,6 +1,7 @@
 import { LanguageResultsCard } from '../components/LanguageResultsCard';
 import { MetadataQualityScore } from '../components/MetadataQualityScore';
 import { SmartRewriteSuggestions } from '../components/SmartRewriteSuggestions';
+import { CombinedDataDownload } from '../components/CombinedDataDownload';
 import { Sparkles } from 'lucide-react';
 import type { Metadata, SEOAnalysis, TranslationResult } from '../services/api';
 
@@ -35,10 +36,10 @@ export function OutputPanel({ showResults, selectedLanguages, metadata, seoScore
   return (
     <div className="space-y-8">
       <div className="text-center">
-        <h3 className="text-2xl text-white/90 mb-2">
+        <h3 className="text-3xl text-white/90 mb-2">
           Generated <span className="text-[#a3ff12]">Results</span>
         </h3>
-        <p className="text-white/40 text-sm">
+        <p className="text-white/40 text-base">
           SEO metadata optimized for {selectedLanguages.length} language{selectedLanguages.length !== 1 ? 's' : ''}
         </p>
       </div>
@@ -76,6 +77,13 @@ export function OutputPanel({ showResults, selectedLanguages, metadata, seoScore
           )}
         </div>
       </div>
+
+      {/* Combined Data Download - Full Width */}
+      <CombinedDataDownload
+        selectedLanguages={selectedLanguages}
+        metadata={metadata}
+        translations={translations}
+      />
 
       {/* Language Translation Cards */}
       <div>
