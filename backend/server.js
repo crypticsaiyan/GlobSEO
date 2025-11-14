@@ -10,6 +10,8 @@ import cors from 'cors';
 import { scrapeMetadata } from './scraper.js';
 import { processMetadataTranslations } from './lingo-translate.js';
 import { generateSEOScore } from './seo-score.js';
+import { getCacheStats, clearCache } from './cache-utils.js';
+import { rateLimiter, strictRateLimiter } from './rate-limiter.js';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -23,6 +25,9 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Apply rate limiting to all API routes
+app.use('/api/', rateLimiter);
 
 // Increase timeout for translation requests (default is 2 minutes)
 app.use((req, res, next) => {
@@ -85,7 +90,7 @@ app.post('/api/scrape', async (req, res) => {
  * Body: { url: string, languages: string[] }
  * Returns: { original: Object, translations: Object }
  */
-app.post('/api/translate', async (req, res) => {
+app.post('/api/translate', strictRateLimiter, async (req, res) => {
   try {
     const { url, languages = ['es', 'fr'] } = req.body;
 
@@ -295,7 +300,7 @@ app.post('/api/scrape-and-score', async (req, res) => {
  * }
  * Returns: { success: boolean, metadata: Object, translations: Object, seoScore: Object }
  */
-app.post('/api/scrape-translate-score', async (req, res) => {
+app.post('/api/scrape-translate-score', strictRateLimiter, async (req, res) => {
   try {
     const { url, languages = [], primaryKeyword } = req.body;
 
@@ -398,6 +403,34 @@ app.get('/api/languages', (req, res) => {
   });
 });
 
+/**
+ * GET /api/cache/stats
+ * Get cache statistics
+ */
+app.get('/api/cache/stats', (req, res) => {
+  const stats = getCacheStats();
+  res.json({
+    success: true,
+    stats: {
+      ...stats,
+      cacheSizeFormatted: `${(stats.cacheSize / 1024).toFixed(2)} KB`,
+      expiryHours: 24
+    }
+  });
+});
+
+/**
+ * DELETE /api/cache
+ * Clear all cache (admin endpoint)
+ */
+app.delete('/api/cache', (req, res) => {
+  clearCache();
+  res.json({
+    success: true,
+    message: 'Cache cleared successfully'
+  });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
@@ -422,11 +455,18 @@ app.listen(PORT, () => {
   console.log('📡 Available Endpoints:');
   console.log(`   GET  http://localhost:${PORT}/api/health`);
   console.log(`   GET  http://localhost:${PORT}/api/languages`);
+  console.log(`   GET  http://localhost:${PORT}/api/cache/stats`);
+  console.log(`   DELETE http://localhost:${PORT}/api/cache`);
   console.log(`   POST http://localhost:${PORT}/api/scrape`);
-  console.log(`   POST http://localhost:${PORT}/api/translate`);
+  console.log(`   POST http://localhost:${PORT}/api/translate (rate limited)`);
   console.log(`   POST http://localhost:${PORT}/api/seo-score`);
   console.log(`   POST http://localhost:${PORT}/api/scrape-and-score`);
-  console.log(`   POST http://localhost:${PORT}/api/scrape-translate-score`);
+  console.log(`   POST http://localhost:${PORT}/api/scrape-translate-score (rate limited)`);
+  console.log('');
+  console.log('⚡ Optimizations Active:');
+  console.log('   ✓ Translation caching (24h expiry)');
+  console.log('   ✓ Incremental translation (only missing languages)');
+  console.log('   ✓ Rate limiting (10 req/min general, 3 req/min translations)');
   console.log('');
   console.log('📚 Documentation: README.md');
   console.log('');

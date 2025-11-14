@@ -9,6 +9,13 @@ import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import {
+  getCacheKey,
+  getCachedTranslation,
+  setCachedTranslation,
+  getMissingLanguages,
+  mergeTranslations
+} from './cache-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -153,6 +160,7 @@ async function translateWithLingo(content, sourceLang, targetLang) {
 
 /**
  * Process and translate metadata for frontend
+ * OPTIMIZED: Uses caching and incremental translation
  * @param {Object} metadata - Scraped metadata
  * @param {Array<string>} targetLanguages - Target languages
  * @returns {Promise<Object>} - Translations object
@@ -188,10 +196,45 @@ async function processMetadataTranslations(metadata, targetLanguages) {
     }
   };
 
+  // OPTIMIZATION 1: Check cache first
+  const cacheKey = getCacheKey(translationContent, sourceLang, actualTargets);
+  const cachedTranslations = getCachedTranslation(cacheKey);
+  
+  if (cachedTranslations) {
+    console.log('🚀 Using cached translations - NO API calls needed!');
+    return cachedTranslations;
+  }
+
+  // OPTIMIZATION 2: Check for partial translations (incremental)
+  let partialCacheKey = null;
+  let existingTranslations = {};
+  
+  // Try to find partial cache matches (same content, subset of languages)
+  for (const subset of getLanguageSubsets(actualTargets)) {
+    const subsetKey = getCacheKey(translationContent, sourceLang, subset);
+    const subsetCache = getCachedTranslation(subsetKey);
+    
+    if (subsetCache) {
+      existingTranslations = mergeTranslations(existingTranslations, subsetCache);
+      console.log(`📦 Found partial cache for: ${subset.join(', ')}`);
+    }
+  }
+
+  // Determine which languages still need translation
+  const missingLanguages = getMissingLanguages(existingTranslations, actualTargets);
+  
+  if (missingLanguages.length === 0) {
+    console.log('✅ All languages found in cache!');
+    setCachedTranslation(cacheKey, existingTranslations, actualTargets);
+    return existingTranslations;
+  }
+
+  console.log(`🔄 Need to translate ${missingLanguages.length}/${actualTargets.length} languages: ${missingLanguages.join(', ')}`);
+
   try {
-    // Setup i18n.json config with ALL target languages at once
-    console.log(`🔧 Setting up Lingo.dev config for languages: ${actualTargets.join(', ')}`);
-    setupI18nConfig(sourceLang, actualTargets);
+    // Setup i18n.json config with ONLY missing languages
+    console.log(`🔧 Setting up Lingo.dev config for languages: ${missingLanguages.join(', ')}`);
+    setupI18nConfig(sourceLang, missingLanguages);
 
     // Write source file ONCE
     const sourceFile = path.join(I18N_DIR, `${sourceLang}.json`);
@@ -212,8 +255,8 @@ async function processMetadataTranslations(metadata, targetLanguages) {
     fs.writeFileSync(sourceFile, JSON.stringify(mergedContent, null, 2));
     console.log(`📝 Wrote source content to ${sourceLang}.json`);
 
-    // Run Lingo.dev CLI ONCE for all languages
-    console.log(`🔄 Running Lingo.dev translation (this runs ONCE for all ${actualTargets.length} languages)...`);
+    // Run Lingo.dev CLI ONCE for all missing languages
+    console.log(`🔄 Running Lingo.dev translation (this runs ONCE for ${missingLanguages.length} languages)...`);
     
     try {
       execSync('npx lingo.dev@latest run', {
@@ -227,37 +270,69 @@ async function processMetadataTranslations(metadata, targetLanguages) {
       throw execError;
     }
 
-    // Read all translated files AFTER single run
-    for (const targetLang of actualTargets) {
+    // Read all newly translated files
+    const newTranslations = {};
+    for (const targetLang of missingLanguages) {
       const targetFile = path.join(I18N_DIR, `${targetLang}.json`);
       
       if (fs.existsSync(targetFile)) {
         const translated = JSON.parse(fs.readFileSync(targetFile, 'utf8'));
-        translations[targetLang] = translated;
+        newTranslations[targetLang] = translated;
         console.log(`✅ Translation to ${targetLang} completed`);
       } else {
         console.warn(`⚠️  Translation file for ${targetLang} not found`);
-        translations[targetLang] = {
+        newTranslations[targetLang] = {
           ...translationContent,
           _error: `Translation file not generated`
         };
       }
     }
 
-    console.log(`✅ All translations complete in single run`);
+    // Merge with existing translations
+    const allTranslations = mergeTranslations(existingTranslations, newTranslations);
+
+    // OPTIMIZATION 3: Cache the complete result
+    setCachedTranslation(cacheKey, allTranslations, actualTargets);
+
+    console.log(`✅ All translations complete (${missingLanguages.length} new, ${Object.keys(existingTranslations).length} cached)`);
+    
+    return allTranslations;
     
   } catch (error) {
     console.error(`❌ Translation process failed: ${error.message}`);
     // Return empty translations on error
+    const errorTranslations = {};
     for (const targetLang of actualTargets) {
-      translations[targetLang] = {
+      errorTranslations[targetLang] = existingTranslations[targetLang] || {
         ...translationContent,
         _error: `Translation failed: ${error.message}`
       };
     }
+    return errorTranslations;
   }
+}
 
-  return translations;
+/**
+ * Generate all subsets of language arrays for partial cache matching
+ * @param {Array<string>} languages - Language codes
+ * @returns {Array<Array<string>>} - All non-empty subsets
+ */
+function getLanguageSubsets(languages) {
+  const subsets = [];
+  const n = languages.length;
+  
+  // Generate all subsets except empty set and full set
+  for (let i = 1; i < (1 << n) - 1; i++) {
+    const subset = [];
+    for (let j = 0; j < n; j++) {
+      if (i & (1 << j)) {
+        subset.push(languages[j]);
+      }
+    }
+    subsets.push(subset);
+  }
+  
+  return subsets;
 }
 
 /**

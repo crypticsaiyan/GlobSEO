@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Header } from "./components/Header";
 import { HeroSection } from "./components/HeroSection";
 import { InputPanel } from "./components/InputPanel";
 import { OutputPanel } from "./components/OutputPanel";
 import { FeaturesSection } from "./components/FeaturesSection";
+import { useThrottle } from "./hooks/useDebounce";
 import {
   api,
   type Metadata,
@@ -34,9 +35,10 @@ export default function App() {
   const [seoScore, setSeoScore] = useState<SEOAnalysis | null>(null);
   const [translations, setTranslations] = useState<TranslationResult>({});
   const [error, setError] = useState<string | null>(null);
-  const [processingStep] = useState<string>("");
+  const [processingStep, setProcessingStep] = useState<string>("");
 
-  const handleGenerate = async (url: string, primaryKeyword?: string) => {
+  // Core generate function (not throttled directly)
+  const performGenerate = useCallback(async (url: string, primaryKeyword?: string) => {
     setIsGenerating(true);
     setError(null);
     setShowResults(false);
@@ -50,19 +52,31 @@ export default function App() {
 
       if (targetLanguageCodes.length > 0) {
         // Use complete pipeline with translations
+        setProcessingStep("Scraping metadata...");
         console.log("🌍 Running complete pipeline with translations...");
+        
+        // Simulate progress for better UX
+        setTimeout(() => setProcessingStep("Translating content..."), 1500);
+        setTimeout(() => setProcessingStep("Analyzing SEO..."), 3000);
+        
         const result = await api.scrapeTranslateScore(
           url,
           targetLanguageCodes,
           primaryKeyword
         );
+        
+        setProcessingStep("Finalizing...");
         setMetadata(result.metadata);
         setSeoScore(result.seoScore);
         setTranslations(result.translations);
         console.log("✅ Pipeline completed successfully");
       } else {
         // Only scrape and score (no translations)
+        setProcessingStep("Scraping metadata...");
         console.log("📊 Running scrape and score only...");
+        
+        setTimeout(() => setProcessingStep("Analyzing SEO..."), 1000);
+        
         const result = await api.scrapeAndScore(url, primaryKeyword);
         setMetadata(result.metadata);
         setSeoScore(result.seoScore);
@@ -75,8 +89,12 @@ export default function App() {
       console.error("Error:", err);
     } finally {
       setIsGenerating(false);
+      setProcessingStep("");
     }
-  };
+  }, [selectedLanguages]);
+
+  // Throttled version: prevents rapid-fire requests (max 1 per 3 seconds)
+  const handleGenerate = useThrottle(performGenerate, 3000);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white overflow-x-hidden">

@@ -1,17 +1,17 @@
 {
   "greeting": "来自 Lingo.dev 的问候",
   "meta": {
-    "title": "Lingo.dev - 自动化 AI 本地化服务，适用于网页和移动应用",
-    "description": "最先进的 AI 本地化服务，直接集成到 CI/CD 中。加速发布频率，提升用户体验，吸引更多付费客户。",
+    "title": "GitHub · 变化是永恒的。GitHub 让您始终领先。· GitHubAmerican AirlinesDuolingoErnst and YoungFordInfoSysMercado LibreMercedes-BenzShopifyPhilipsSociété GénéraleSpotifyVodafoneAmerican AirlinesDuolingoErnst and YoungFordInfoSysMercado LibreMercedes-BenzShopifyPhilipsSociété GénéraleSpotifyVodafoneInstagramTikTokTwitch",
+    "description": "加入全球最广泛采用的、由 AI 驱动的开发者平台，数百万开发者、企业和最大的开源社区在这里构建推动人类进步的软件。",
     "keywords": "",
-    "h1": "构建。提交。翻译。"
+    "h1": "搜索代码、仓库、用户、问题、拉取请求……"
   },
   "og": {
-    "title": "Lingo.dev - 自动化 AI 本地化服务，适用于网页和移动应用",
-    "description": "最先进的 AI 本地化服务，直接集成到 CI/CD 中。加速发布频率，提升用户体验，吸引更多付费客户。"
+    "title": "GitHub · 变化是永恒的。GitHub 让您始终领先。",
+    "description": "加入全球最广泛采用的、由 AI 驱动的开发者平台，数百万开发者、企业和最大的开源社区在这里构建推动人类进步的软件。"
   },
   "twitter": {
-    "title": "Lingo.dev - 自动化 AI 本地化服务，适用于网页和移动应用",
-    "description": "最先进的 AI 本地化服务，直接集成到 CI/CD 中。加速发布频率，提升用户体验，吸引更多付费客户。"
+    "title": "GitHub · 变化是永恒的。GitHub 让您始终领先。",
+    "description": "加入全球最广泛采用的、由 AI 驱动的开发者平台，数百万开发者、企业和最大的开源社区在这里构建推动人类进步的软件。"
   }
 }
