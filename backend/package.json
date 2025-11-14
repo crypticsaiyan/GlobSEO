@@ -10,16 +10,20 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "scrape": "node scraper.js",
+    "scrape-score": "node scraper.js --score",
     "translate": "node translate-metadata.js",
     "lingo": "node lingo-translate.js",
     "pipeline": "node pipeline.js",
     "install-browsers": "npx playwright install chromium",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test-seo": "node test-seo-score.js"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "axios": "^1.13.2",
     "cheerio": "^1.1.2",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "playwright": "^1.56.1"
   }

@@ -3,67 +3,80 @@ import { Copy, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '../components/ui/badge';
 import { SchemaGenerator } from './SchemaGenerator';
 import { SocialCardPreview } from './SocialCardPreview';
-import type { Metadata, SEOAnalysis } from '../services/api';
+import type { Metadata, SEOAnalysis, TranslationResult } from '../services/api';
 
 interface LanguageResultsCardProps {
   language: string;
   metadata: Metadata | null;
   seoScore: SEOAnalysis | null;
+  translations: TranslationResult;
 }
 
-// Mock data generator for different languages
-const generateMockData = (language: string) => {
-  const mockData: Record<string, any> = {
-    English: {
-      title: "GlobSEO - Multilingual SEO Metadata Generator | Boost Global Rankings",
-      description: "Generate optimized SEO metadata in multiple languages with GlobSEO. AI-powered title tags, meta descriptions, and keywords for international search visibility.",
-      keywords: ["multilingual SEO", "metadata generator", "SEO optimization", "international SEO", "AI SEO tools"],
-    },
-    Spanish: {
-      title: "GlobSEO - Generador de Metadatos SEO Multilingüe | Mejora tu Ranking Global",
-      description: "Genera metadatos SEO optimizados en múltiples idiomas con GlobSEO. Títulos, meta descripciones y palabras clave impulsadas por IA para visibilidad internacional.",
-      keywords: ["SEO multilingüe", "generador de metadatos", "optimización SEO", "SEO internacional", "herramientas SEO IA"],
-    },
-    French: {
-      title: "GlobSEO - Générateur de Métadonnées SEO Multilingue | Améliorez votre Classement",
-      description: "Générez des métadonnées SEO optimisées dans plusieurs langues avec GlobSEO. Balises de titre, méta descriptions et mots-clés alimentés par l'IA.",
-      keywords: ["SEO multilingue", "générateur de métadonnées", "optimisation SEO", "SEO international", "outils SEO IA"],
-    },
-    German: {
-      title: "GlobSEO - Mehrsprachiger SEO-Metadaten-Generator | Verbessern Sie Ihr Ranking",
-      description: "Generieren Sie optimierte SEO-Metadaten in mehreren Sprachen mit GlobSEO. KI-gestützte Title-Tags, Meta-Beschreibungen und Keywords.",
-      keywords: ["mehrsprachiges SEO", "Metadaten-Generator", "SEO-Optimierung", "internationales SEO", "KI-SEO-Tools"],
-    },
-    Japanese: {
-      title: "GlobSEO - 多言語SEOメタデータジェネレーター | グローバルランキング向上",
-      description: "GlobSEOで複数の言語に最適化されたSEOメタデータを生成。AI搭載のタイトルタグ、メタディスクリプション、キーワード。",
-      keywords: ["多言語SEO", "メタデータジェネレーター", "SEO最適化", "国際SEO", "AI SEOツール"],
-    },
-    Chinese: {
-      title: "GlobSEO - 多语言SEO元数据生成器 | 提升全球排名",
-      description: "使用GlobSEO生成多种语言的优化SEO元数据。AI驱动的标题标签、元描述和关键词，提升国际搜索可见性。",
-      keywords: ["多语言SEO", "元数据生成器", "SEO优化", "国际SEO", "AI SEO工具"],
-    },
-    Portuguese: {
-      title: "GlobSEO - Gerador de Metadados SEO Multilíngue | Melhore seu Ranking Global",
-      description: "Gere metadados SEO otimizados em vários idiomas com GlobSEO. Tags de título, meta descrições e palavras-chave com IA.",
-      keywords: ["SEO multilíngue", "gerador de metadados", "otimização SEO", "SEO internacional", "ferramentas SEO IA"],
-    },
-    Italian: {
-      title: "GlobSEO - Generatore di Metadati SEO Multilingue | Migliora il Ranking Globale",
-      description: "Genera metadati SEO ottimizzati in più lingue con GlobSEO. Tag del titolo, meta descrizioni e parole chiave basate sull'IA.",
-      keywords: ["SEO multilingue", "generatore di metadati", "ottimizzazione SEO", "SEO internazionale", "strumenti SEO IA"],
-    }
-  };
-
-  return mockData[language] || mockData.English;
+// Language mapping: Display name -> Language code
+const LANGUAGE_CODE_MAP: Record<string, string> = {
+  'English': 'en',
+  'Spanish': 'es',
+  'French': 'fr',
+  'German': 'de',
+  'Japanese': 'ja',
+  'Chinese': 'zh',
+  'Portuguese': 'pt',
+  'Italian': 'it',
 };
 
-export function LanguageResultsCard({ language, metadata, seoScore }: LanguageResultsCardProps) {
+export function LanguageResultsCard({ language, metadata, seoScore, translations }: LanguageResultsCardProps) {
   const [copied, setCopied] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
-  const mockResults = generateMockData(language);
+  // Get language code from display name
+  const langCode = LANGUAGE_CODE_MAP[language] || language.toLowerCase();
+  
+  // Get the data for this language
+  // For English, use original metadata
+  // For other languages, use translations if available
+  const isEnglish = language === 'English';
+  const translatedData = translations[langCode];
+  
+  // Get metadata values
+  const getMetadataValue = (field: 'title' | 'description' | 'keywords' | 'ogTitle' | 'ogDescription' | 'twitterTitle' | 'twitterDescription' | 'h1') => {
+    if (isEnglish && metadata) {
+      return metadata[field] || '';
+    }
+    
+    if (translatedData) {
+      // Translation structure: { meta: {...}, og: {...}, twitter: {...} }
+      if (field === 'title' || field === 'description' || field === 'keywords' || field === 'h1') {
+        return translatedData.meta?.[field] || '';
+      }
+      if (field === 'ogTitle') {
+        return translatedData.og?.title || '';
+      }
+      if (field === 'ogDescription') {
+        return translatedData.og?.description || '';
+      }
+      if (field === 'twitterTitle') {
+        return translatedData.twitter?.title || '';
+      }
+      if (field === 'twitterDescription') {
+        return translatedData.twitter?.description || '';
+      }
+    }
+    
+    // Fallback to original metadata
+    return metadata?.[field] || '';
+  };
+
+  const title = getMetadataValue('title');
+  const description = getMetadataValue('description');
+  const keywords = getMetadataValue('keywords');
+  const keywordsArray = keywords ? keywords.split(',').map((k: string) => k.trim()).filter(Boolean) : [];
+  
+  const ogTitle = getMetadataValue('ogTitle') || title;
+  const ogDescription = getMetadataValue('ogDescription') || description;
+  
+  // Get URL and image from original metadata (these don't get translated)
+  const url = metadata?.url || metadata?.ogUrl || metadata?.canonical || '';
+  const ogImage = metadata?.ogImage || '';
 
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -95,17 +108,17 @@ export function LanguageResultsCard({ language, metadata, seoScore }: LanguageRe
     return flags[lang] || '🌐';
   };
 
-  const htmlMeta = `<meta name="description" content="${mockResults.description}">
-<meta name="keywords" content="${mockResults.keywords.join(', ')}">
-<meta property="og:title" content="${mockResults.title}">
-<meta property="og:description" content="${mockResults.description}">
+  const htmlMeta = `<meta name="description" content="${description}">
+<meta name="keywords" content="${keywords}">
+<meta property="og:title" content="${ogTitle}">
+<meta property="og:description" content="${ogDescription}">
 <meta name="twitter:card" content="summary_large_image">`;
 
   const jsonOutput = {
-    title: mockResults.title,
-    description: mockResults.description,
-    keywords: mockResults.keywords,
-    language: language.toLowerCase(),
+    title,
+    description,
+    keywords: keywordsArray,
+    language: langCode,
   };
 
   return (
@@ -135,7 +148,7 @@ export function LanguageResultsCard({ language, metadata, seoScore }: LanguageRe
           <div className="flex items-center justify-between">
             <span className="text-xs text-white/40 uppercase tracking-wider">SEO Title</span>
             <button
-              onClick={() => handleCopy(mockResults.title, 'title')}
+              onClick={() => handleCopy(title, 'title')}
               className="p-1.5 hover:bg-white/10 rounded transition-colors"
             >
               {copied === `${language}-title` ? (
@@ -146,7 +159,7 @@ export function LanguageResultsCard({ language, metadata, seoScore }: LanguageRe
             </button>
           </div>
           <p className="text-white/80 text-sm leading-relaxed bg-[#0a0a0a] rounded-lg p-3 border border-white/5">
-            {mockResults.title}
+            {title || 'No title available'}
           </p>
         </div>
 
@@ -155,7 +168,7 @@ export function LanguageResultsCard({ language, metadata, seoScore }: LanguageRe
           <div className="flex items-center justify-between">
             <span className="text-xs text-white/40 uppercase tracking-wider">Meta Description</span>
             <button
-              onClick={() => handleCopy(mockResults.description, 'description')}
+              onClick={() => handleCopy(description, 'description')}
               className="p-1.5 hover:bg-white/10 rounded transition-colors"
             >
               {copied === `${language}-description` ? (
@@ -166,7 +179,7 @@ export function LanguageResultsCard({ language, metadata, seoScore }: LanguageRe
             </button>
           </div>
           <p className="text-white/70 text-sm leading-relaxed bg-[#0a0a0a] rounded-lg p-3 border border-white/5">
-            {mockResults.description}
+            {description || 'No description available'}
           </p>
         </div>
 
@@ -175,7 +188,7 @@ export function LanguageResultsCard({ language, metadata, seoScore }: LanguageRe
           <div className="flex items-center justify-between">
             <span className="text-xs text-white/40 uppercase tracking-wider">Keywords</span>
             <button
-              onClick={() => handleCopy(mockResults.keywords.join(', '), 'keywords')}
+              onClick={() => handleCopy(keywords, 'keywords')}
               className="p-1.5 hover:bg-white/10 rounded transition-colors"
             >
               {copied === `${language}-keywords` ? (
@@ -186,15 +199,19 @@ export function LanguageResultsCard({ language, metadata, seoScore }: LanguageRe
             </button>
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {mockResults.keywords.map((keyword: string, index: number) => (
-              <Badge
-                key={index}
-                variant="secondary"
-                className="bg-white/5 text-white/70 border-0 hover:bg-white/10 transition-colors text-xs"
-              >
-                {keyword}
-              </Badge>
-            ))}
+            {keywordsArray.length > 0 ? (
+              keywordsArray.map((keyword: string, index: number) => (
+                <Badge
+                  key={index}
+                  variant="secondary"
+                  className="bg-white/5 text-white/70 border-0 hover:bg-white/10 transition-colors text-xs"
+                >
+                  {keyword}
+                </Badge>
+              ))
+            ) : (
+              <span className="text-white/40 text-xs">No keywords available</span>
+            )}
           </div>
         </div>
 
@@ -203,8 +220,9 @@ export function LanguageResultsCard({ language, metadata, seoScore }: LanguageRe
         {/* Schema Generator */}
         <SchemaGenerator
           language={language}
-          title={mockResults.title}
-          description={mockResults.description}
+          title={title}
+          description={description}
+          url={url}
         />
 
         <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
@@ -212,8 +230,10 @@ export function LanguageResultsCard({ language, metadata, seoScore }: LanguageRe
         {/* Social Card Preview */}
         <SocialCardPreview
           language={language}
-          title={mockResults.title}
-          description={mockResults.description}
+          title={title}
+          description={description}
+          url={url}
+          imageUrl={ogImage}
         />
 
         {/* Collapsible HTML Meta Tags */}

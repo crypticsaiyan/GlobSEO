@@ -6,9 +6,11 @@ interface SocialCardPreviewProps {
   language: string;
   title: string;
   description: string;
+  url: string;
+  imageUrl: string;
 }
 
-export function SocialCardPreview({ language, title, description }: SocialCardPreviewProps) {
+export function SocialCardPreview({ language, title, description, url, imageUrl }: SocialCardPreviewProps) {
   const [previewType, setPreviewType] = useState<'twitter' | 'facebook' | 'linkedin'>('twitter');
   const [isExpanded, setIsExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -27,35 +29,46 @@ export function SocialCardPreview({ language, title, description }: SocialCardPr
     return flags[lang] || '🌐';
   };
 
+  // Extract domain and username from URL
+  const getDomain = (urlString: string) => {
+    try {
+      const urlObj = new URL(urlString);
+      return urlObj.hostname.replace('www.', '');
+    } catch {
+      return 'example.com';
+    }
+  };
+
+  const domain = getDomain(url);
+  const twitterHandle = `@${domain.split('.')[0]}`;
+
   // Generate platform-specific meta tags
   const getMetaTags = () => {
-    const baseUrl = 'https://globseo.com';
-    const imageUrl = `${baseUrl}/og-image-${language.toLowerCase()}.jpg`;
+    const finalImageUrl = imageUrl || `${url}/og-image.jpg`;
     
     switch (previewType) {
       case 'twitter':
         return `<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:site" content="@globseo">
+<meta name="twitter:site" content="${twitterHandle}">
 <meta name="twitter:title" content="${title}">
 <meta name="twitter:description" content="${description}">
-<meta name="twitter:image" content="${imageUrl}">`;
+<meta name="twitter:image" content="${finalImageUrl}">`;
       
       case 'facebook':
         return `<meta property="og:type" content="website">
-<meta property="og:url" content="${baseUrl}">
+<meta property="og:url" content="${url}">
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${description}">
-<meta property="og:image" content="${imageUrl}">
+<meta property="og:image" content="${finalImageUrl}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">`;
       
       case 'linkedin':
         return `<meta property="og:type" content="article">
-<meta property="og:url" content="${baseUrl}">
+<meta property="og:url" content="${url}">
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${description}">
-<meta property="og:image" content="${imageUrl}">
-<meta property="article:author" content="GlobSEO">`;
+<meta property="og:image" content="${finalImageUrl}">`;
       
       default:
         return '';
@@ -114,30 +127,30 @@ export function SocialCardPreview({ language, title, description }: SocialCardPr
           <div className="flex gap-2">
             <button
               onClick={() => setPreviewType('twitter')}
-              className={`flex-1 px-3 py-2 rounded-lg text-xs transition-all ${
+              className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 previewType === 'twitter'
-                  ? 'bg-[#1DA1F2]/10 text-[#1DA1F2] border border-[#1DA1F2]/30'
-                  : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10'
+                  ? 'bg-[#1DA1F2] text-white shadow-lg shadow-[#1DA1F2]/20'
+                  : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10 hover:text-white/80'
               }`}
             >
               Twitter/X
             </button>
             <button
               onClick={() => setPreviewType('facebook')}
-              className={`flex-1 px-3 py-2 rounded-lg text-xs transition-all ${
+              className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 previewType === 'facebook'
-                  ? 'bg-[#1877F2]/10 text-[#1877F2] border border-[#1877F2]/30'
-                  : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10'
+                  ? 'bg-[#1877F2] text-white shadow-lg shadow-[#1877F2]/20'
+                  : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10 hover:text-white/80'
               }`}
             >
               Facebook
             </button>
             <button
               onClick={() => setPreviewType('linkedin')}
-              className={`flex-1 px-3 py-2 rounded-lg text-xs transition-all ${
+              className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 previewType === 'linkedin'
-                  ? 'bg-[#0A66C2]/10 text-[#0A66C2] border border-[#0A66C2]/30'
-                  : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10'
+                  ? 'bg-[#0A66C2] text-white shadow-lg shadow-[#0A66C2]/20'
+                  : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10 hover:text-white/80'
               }`}
             >
               LinkedIn
@@ -146,19 +159,32 @@ export function SocialCardPreview({ language, title, description }: SocialCardPr
 
           {/* Preview Card */}
           <div className="bg-[#0a0a0a] rounded-lg border border-white/10 overflow-hidden">
-            {/* Mock Image */}
-            <div className="aspect-[1.91/1] bg-gradient-to-br from-[#a3ff12]/20 via-[#a3ff12]/5 to-transparent relative overflow-hidden">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-[#a3ff12]/20 flex items-center justify-center mx-auto mb-3">
-                    <span className="text-3xl">{getLanguageFlag(language)}</span>
+            {/* Image Preview - Reduced size */}
+            <div className="aspect-[2.5/1] bg-gradient-to-br from-[#a3ff12]/20 via-[#a3ff12]/5 to-transparent relative overflow-hidden">
+              {imageUrl ? (
+                <img 
+                  src={imageUrl} 
+                  alt={title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Fallback to placeholder if image fails to load
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              ) : null}
+              {!imageUrl && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-12 h-12 rounded-xl bg-[#a3ff12]/20 flex items-center justify-center mx-auto mb-2">
+                      <span className="text-2xl">{getLanguageFlag(language)}</span>
+                    </div>
+                    <div className="text-xl font-bold text-white/20">{domain}</div>
+                    {previewType === 'twitter' && (
+                      <div className="text-xs text-white/10 mt-1">{twitterHandle}</div>
+                    )}
                   </div>
-                  <div className="text-2xl font-bold text-white/20">GlobSEO</div>
-                  {previewType === 'twitter' && (
-                    <div className="text-xs text-white/10 mt-1">@globseo</div>
-                  )}
                 </div>
-              </div>
+              )}
               
               {/* Preview overlay */}
               <div className="absolute top-2 right-2 flex gap-2">
@@ -182,7 +208,7 @@ export function SocialCardPreview({ language, title, description }: SocialCardPr
 
             {/* Card Content */}
             <div className="p-3 space-y-2">
-              <div className="text-xs text-white/40 uppercase">globseo.com</div>
+              <div className="text-xs text-white/40 uppercase">{domain}</div>
               <div className="text-sm font-medium text-white/90 line-clamp-2">
                 {truncatedTitle}
               </div>

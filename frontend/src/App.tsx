@@ -5,7 +5,19 @@ import { InputPanel } from './components/InputPanel';
 import { OutputPanel } from './components/OutputPanel';
 import { AnnouncementBanner } from './components/AnnouncementBanner';
 import { FeaturesSection } from './components/FeaturesSection';
-import { api, type Metadata, type SEOAnalysis } from './services/api';
+import { api, type Metadata, type SEOAnalysis, type TranslationResult } from './services/api';
+
+// Language mapping: Display name -> Language code
+const LANGUAGE_CODE_MAP: Record<string, string> = {
+  'English': 'en',
+  'Spanish': 'es',
+  'French': 'fr',
+  'German': 'de',
+  'Japanese': 'ja',
+  'Chinese': 'zh',
+  'Portuguese': 'pt',
+  'Italian': 'it',
+};
 
 export default function App() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -13,6 +25,7 @@ export default function App() {
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['English', 'Spanish']);
   const [metadata, setMetadata] = useState<Metadata | null>(null);
   const [seoScore, setSeoScore] = useState<SEOAnalysis | null>(null);
+  const [translations, setTranslations] = useState<TranslationResult>({});
   const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async (url: string, primaryKeyword?: string) => {
@@ -21,10 +34,29 @@ export default function App() {
     setShowResults(false);
     
     try {
-      // Scrape and get SEO score
-      const result = await api.scrapeAndScore(url, primaryKeyword);
-      setMetadata(result.metadata);
-      setSeoScore(result.seoScore);
+      // Convert language names to codes (excluding English as it's the source)
+      const targetLanguageCodes = selectedLanguages
+        .filter(lang => lang !== 'English')
+        .map(lang => LANGUAGE_CODE_MAP[lang] || lang.toLowerCase())
+        .filter(Boolean);
+
+      if (targetLanguageCodes.length > 0) {
+        // Use complete pipeline with translations
+        console.log('🌍 Running complete pipeline with translations...');
+        const result = await api.scrapeTranslateScore(url, targetLanguageCodes, primaryKeyword);
+        setMetadata(result.metadata);
+        setSeoScore(result.seoScore);
+        setTranslations(result.translations);
+        console.log('✅ Pipeline completed successfully');
+      } else {
+        // Only scrape and score (no translations)
+        console.log('📊 Running scrape and score only...');
+        const result = await api.scrapeAndScore(url, primaryKeyword);
+        setMetadata(result.metadata);
+        setSeoScore(result.seoScore);
+        setTranslations({});
+      }
+      
       setShowResults(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to analyze URL');
@@ -81,6 +113,7 @@ export default function App() {
                 selectedLanguages={selectedLanguages}
                 metadata={metadata}
                 seoScore={seoScore}
+                translations={translations}
               />
             </div>
           </div>

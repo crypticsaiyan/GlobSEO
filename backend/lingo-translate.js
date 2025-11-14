@@ -161,7 +161,8 @@ async function processMetadataTranslations(metadata, targetLanguages) {
   const translations = {};
   const sourceLang = metadata.lang || 'en';
 
-  // Prepare metadata for translation (flatten to key-value pairs)
+  // Prepare ONLY metadata fields for translation - NOT content
+  // This ensures website content is never translated, only SEO metadata
   const translationContent = {
     meta: {
       title: metadata.title || '',

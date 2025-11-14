@@ -9,8 +9,13 @@ import express from 'express';
 import cors from 'cors';
 import { scrapeMetadata } from './scraper.js';
 import { processMetadataTranslations } from './lingo-translate.js';
+import { generateSEOScore } from './seo-score.js';
 import fs from 'fs';
 import path from 'path';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -149,6 +154,224 @@ app.post('/api/translate', async (req, res) => {
 });
 
 /**
+ * POST /api/seo-score
+ * Generate SEO quality score for scraped metadata
+ * 
+ * Body: { 
+ *   url: string,
+ *   title?: string,
+ *   description?: string,
+ *   keywords?: string,
+ *   ogTags?: Object,
+ *   content?: string,
+ *   language?: string,
+ *   primaryKeyword?: string
+ * }
+ * Returns: { success: boolean, analysis: Object, metadata: Object }
+ */
+app.post('/api/seo-score', async (req, res) => {
+  try {
+    const { 
+      url, 
+      title, 
+      description, 
+      keywords, 
+      ogTags,
+      content,
+      language = 'en',
+      primaryKeyword
+    } = req.body;
+
+    if (!url) {
+      return res.status(400).json({ 
+        error: 'URL is required',
+        message: 'Please provide a valid URL in the request body'
+      });
+    }
+
+    console.log(`📊 Generating SEO score for: ${url}`);
+
+    const result = await generateSEOScore({
+      url,
+      title,
+      description,
+      keywords,
+      ogTags,
+      content,
+      language,
+      primaryKeyword
+    });
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('SEO Score Generation Error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate SEO score',
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+/**
+ * POST /api/scrape-and-score
+ * Scrape metadata and generate SEO quality score in one call
+ * 
+ * Body: { 
+ *   url: string,
+ *   primaryKeyword?: string
+ * }
+ * Returns: { success: boolean, metadata: Object, seoScore: Object }
+ */
+app.post('/api/scrape-and-score', async (req, res) => {
+  try {
+    const { url, primaryKeyword } = req.body;
+
+    if (!url) {
+      return res.status(400).json({ 
+        error: 'URL is required',
+        message: 'Please provide a valid URL in the request body'
+      });
+    }
+
+    console.log(`🔍 Scraping and scoring: ${url}`);
+
+    // Step 1: Scrape metadata
+    console.log('📥 Step 1: Scraping metadata...');
+    const metadata = await scrapeMetadata(url);
+    console.log('✅ Metadata scraped successfully');
+
+    // Step 2: Generate SEO score
+    console.log('📊 Step 2: Generating SEO score...');
+    const seoScore = await generateSEOScore({
+      url,
+      title: metadata.title,
+      description: metadata.description,
+      keywords: metadata.keywords,
+      ogTags: {
+        'og:title': metadata.ogTitle,
+        'og:description': metadata.ogDescription,
+        'og:image': metadata.ogImage,
+        'og:type': metadata.ogType,
+        'og:url': metadata.ogUrl
+      },
+      content: metadata.content,
+      language: metadata.language || 'en',
+      primaryKeyword
+    });
+    console.log('✅ SEO score generated successfully');
+
+    const result = {
+      success: true,
+      url,
+      metadata,
+      seoScore: seoScore.analysis,
+      timestamp: new Date().toISOString()
+    };
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('Scrape and Score Error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to scrape and score',
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+/**
+ * POST /api/scrape-translate-score
+ * Complete pipeline: Scrape, translate metadata (NOT content), and score SEO
+ * 
+ * Body: { 
+ *   url: string,
+ *   languages: string[] (language codes like ['es', 'fr']),
+ *   primaryKeyword?: string
+ * }
+ * Returns: { success: boolean, metadata: Object, translations: Object, seoScore: Object }
+ */
+app.post('/api/scrape-translate-score', async (req, res) => {
+  try {
+    const { url, languages = [], primaryKeyword } = req.body;
+
+    if (!url) {
+      return res.status(400).json({ 
+        error: 'URL is required',
+        message: 'Please provide a valid URL in the request body'
+      });
+    }
+
+    if (!Array.isArray(languages) || languages.length === 0) {
+      return res.status(400).json({ 
+        error: 'Languages array is required',
+        message: 'Please provide an array of language codes (e.g., ["es", "fr"])'
+      });
+    }
+
+    console.log(`🔍 Complete pipeline for: ${url}`);
+    console.log(`🌍 Target languages: ${languages.join(', ')}`);
+
+    // Step 1: Scrape metadata
+    console.log('📥 Step 1: Scraping metadata...');
+    const metadata = await scrapeMetadata(url);
+    console.log('✅ Metadata scraped successfully');
+
+    // Step 2: Translate ONLY metadata fields (not content)
+    console.log('🔄 Step 2: Translating metadata fields (excluding content)...');
+    const startTime = Date.now();
+    const translations = await processMetadataTranslations(metadata, languages);
+    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.log(`✅ Metadata translations complete in ${duration}s`);
+
+    // Step 3: Generate SEO score for original
+    console.log('📊 Step 3: Generating SEO score...');
+    const seoScore = await generateSEOScore({
+      url,
+      title: metadata.title,
+      description: metadata.description,
+      keywords: metadata.keywords,
+      ogTags: {
+        'og:title': metadata.ogTitle,
+        'og:description': metadata.ogDescription,
+        'og:image': metadata.ogImage,
+        'og:type': metadata.ogType,
+        'og:url': metadata.ogUrl
+      },
+      content: metadata.content,
+      language: metadata.language || 'en',
+      primaryKeyword
+    });
+    console.log('✅ SEO score generated successfully');
+
+    const result = {
+      success: true,
+      url,
+      metadata,
+      translations,
+      seoScore: seoScore.analysis,
+      targetLanguages: languages,
+      timestamp: new Date().toISOString()
+    };
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('Complete Pipeline Error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to complete pipeline',
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+/**
  * GET /api/languages
  * Get list of supported languages
  */
@@ -201,6 +424,9 @@ app.listen(PORT, () => {
   console.log(`   GET  http://localhost:${PORT}/api/languages`);
   console.log(`   POST http://localhost:${PORT}/api/scrape`);
   console.log(`   POST http://localhost:${PORT}/api/translate`);
+  console.log(`   POST http://localhost:${PORT}/api/seo-score`);
+  console.log(`   POST http://localhost:${PORT}/api/scrape-and-score`);
+  console.log(`   POST http://localhost:${PORT}/api/scrape-translate-score`);
   console.log('');
   console.log('📚 Documentation: README.md');
   console.log('');

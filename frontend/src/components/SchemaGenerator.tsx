@@ -6,23 +6,32 @@ interface SchemaGeneratorProps {
   language: string;
   title: string;
   description: string;
+  url: string;
 }
 
-export function SchemaGenerator({ language, title, description }: SchemaGeneratorProps) {
+export function SchemaGenerator({ language, title, description, url }: SchemaGeneratorProps) {
   const [copied, setCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Extract domain from URL for organization name
+  const getDomain = (urlString: string) => {
+    try {
+      const urlObj = new URL(urlString);
+      return urlObj.hostname.replace('www.', '');
+    } catch {
+      return 'example.com';
+    }
+  };
+
+  const domain = getDomain(url);
+  const organizationName = domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1);
 
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "GlobSEO",
-    "url": "https://globseo.com",
-    "logo": "https://globseo.com/logo.png",
-    "description": description,
-    "sameAs": [
-      "https://twitter.com/globseo",
-      "https://linkedin.com/company/globseo"
-    ]
+    "name": organizationName,
+    "url": url,
+    "description": description
   };
 
   const webPageSchema = {
@@ -30,10 +39,11 @@ export function SchemaGenerator({ language, title, description }: SchemaGenerato
     "@type": "WebPage",
     "name": title,
     "description": description,
+    "url": url,
     "inLanguage": language.toLowerCase().substring(0, 2),
     "publisher": {
       "@type": "Organization",
-      "name": "GlobSEO"
+      "name": organizationName
     }
   };
 
@@ -45,13 +55,13 @@ export function SchemaGenerator({ language, title, description }: SchemaGenerato
         "@type": "ListItem",
         "position": 1,
         "name": "Home",
-        "item": "https://globseo.com"
+        "item": url
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": title.split('|')[0].trim(),
-        "item": "https://globseo.com/metadata"
+        "item": url
       }
     ]
   };

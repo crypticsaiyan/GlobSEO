@@ -2,16 +2,17 @@ import { LanguageResultsCard } from '../components/LanguageResultsCard';
 import { MetadataQualityScore } from '../components/MetadataQualityScore';
 import { SmartRewriteSuggestions } from '../components/SmartRewriteSuggestions';
 import { Sparkles } from 'lucide-react';
-import type { Metadata, SEOAnalysis } from '../services/api';
+import type { Metadata, SEOAnalysis, TranslationResult } from '../services/api';
 
 interface OutputPanelProps {
   showResults: boolean;
   selectedLanguages: string[];
   metadata: Metadata | null;
   seoScore: SEOAnalysis | null;
+  translations: TranslationResult;
 }
 
-export function OutputPanel({ showResults, selectedLanguages, metadata, seoScore }: OutputPanelProps) {
+export function OutputPanel({ showResults, selectedLanguages, metadata, seoScore, translations }: OutputPanelProps) {
   if (!showResults) {
     return (
       <div className="bg-gradient-to-br from-[#141414] to-[#0f0f0f] border border-white/10 rounded-xl p-8 flex flex-col items-center justify-center min-h-[400px] transition-all duration-300 relative overflow-hidden">
@@ -90,6 +91,7 @@ export function OutputPanel({ showResults, selectedLanguages, metadata, seoScore
               language={language}
               metadata={metadata}
               seoScore={seoScore}
+              translations={translations}
             />
           ))}
         </div>

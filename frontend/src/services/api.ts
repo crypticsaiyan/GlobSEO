@@ -53,8 +53,33 @@ export interface ScrapeAndScoreResponse {
   timestamp: string;
 }
 
+export interface ScrapeTranslateScoreResponse {
+  success: boolean;
+  url: string;
+  metadata: Metadata;
+  translations: TranslationResult;
+  seoScore: SEOAnalysis;
+  targetLanguages: string[];
+  timestamp: string;
+}
+
 export interface TranslationResult {
-  [language: string]: Partial<Metadata>;
+  [language: string]: {
+    meta?: {
+      title?: string;
+      description?: string;
+      keywords?: string;
+      h1?: string;
+    };
+    og?: {
+      title?: string;
+      description?: string;
+    };
+    twitter?: {
+      title?: string;
+      description?: string;
+    };
+  };
 }
 
 export interface TranslateResponse {
@@ -99,6 +124,28 @@ class APIService {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.message || 'Failed to scrape and score');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Complete pipeline: Scrape, translate metadata, and score SEO
+   */
+  async scrapeTranslateScore(
+    url: string, 
+    languages: string[], 
+    primaryKeyword?: string
+  ): Promise<ScrapeTranslateScoreResponse> {
+    const response = await fetch(`${API_BASE_URL}/scrape-translate-score`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, languages, primaryKeyword })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to complete pipeline');
     }
 
     return response.json();
