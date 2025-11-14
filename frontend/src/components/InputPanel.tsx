@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Input } from '../components/ui/input';
-import { Textarea } from '../components/ui/textarea';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { X, Link2, Sparkles } from 'lucide-react';
+import { X, Link2 } from 'lucide-react';
 
 interface InputPanelProps {
   onGenerate: (url: string, primaryKeyword?: string) => Promise<void>;
@@ -104,11 +103,11 @@ export function InputPanel({ onGenerate, isGenerating, processingStep, selectedL
         >
           {isGenerating ? (
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
+              <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin font-bold"></div>
               {processingStep || 'Analyzing...'}
             </div>
           ) : (
-            'Analyze & Generate SEO'
+            <span className='font-bold'>Analyze & Generate SEO</span>
           )}
         </Button>
       </div>

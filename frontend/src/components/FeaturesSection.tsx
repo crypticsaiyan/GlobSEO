@@ -1,4 +1,4 @@
-import { Globe, Zap, Code, Languages, BarChart3, Sparkles, FileCode2, Share2 } from 'lucide-react';
+import { Globe, Zap, BarChart3, Sparkles, FileCode2, Share2 } from 'lucide-react';
 
 export function FeaturesSection() {
   const features = [

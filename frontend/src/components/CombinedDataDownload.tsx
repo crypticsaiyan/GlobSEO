@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, FileCode, Check } from 'lucide-react';
+import { FileCode, Check } from 'lucide-react';
 import type { Metadata, TranslationResult } from '../services/api';
 
 interface CombinedDataDownloadProps {
@@ -133,6 +133,7 @@ export function CombinedDataDownload({ selectedLanguages, metadata, translations
     return combinedHTML;
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDownload = () => {
     const htmlContent = generateCombinedHTML();
     const blob = new Blob([htmlContent], { type: 'text/html' });

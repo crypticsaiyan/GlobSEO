@@ -1,22 +1,26 @@
 import { useState } from "react";
-import { Button } from "../components/ui/button";
-import { ArrowRight, Play } from "lucide-react";
-import { Badge } from "../components/ui/badge";
 
 export function HeroSection() {
   const [activeImage, setActiveImage] = useState<"image" | "jp">("jp");
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-[#0a0a0a] via-[#0a0a0a] to-transparent">
+    <section id="hero" className="relative overflow-hidden bg-gradient-to-b from-[#0a0a0a] via-[#0a0a0a] to-transparent">
       <div className="max-w-[1400px] mx-auto px-6 pt-20 pb-32">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="text-center lg:text-left">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl mb-6 tracking-tight leading-[1.1]">
+            <h1
+              className="mb-6 tracking-tight leading-[1.1]"
+              style={{
+                fontFamily: "'Space Grotesk', sans-serif",
+                fontWeight: 600,
+                fontSize: 'clamp(3.75rem, 8vw, 5rem)',
+              }}
+            >
               <div className="mb-2">Rank.</div>
               <div className="mb-2">Optimize.</div>
               <div className="text-[#a3ff12]">Globalize.</div>
             </h1>
-
+            <br />
             <p className="text-lg text-white/60 mb-10 max-w-lg mx-auto lg:mx-0 leading-relaxed">
               Generate SEO metadata and optimize content using AI in
               <i className="text-white"> seconds</i>.

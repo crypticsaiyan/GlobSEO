@@ -1,17 +1,17 @@
 {
   "greeting": "来自 Lingo.dev 的问候",
   "meta": {
-    "title": "示例域名",
-    "description": "",
+    "title": "Lingo.dev - 自动化 AI 本地化服务，适用于网页和移动应用",
+    "description": "最先进的 AI 本地化服务，直接集成到 CI/CD 中。加速发布频率，提升用户体验，吸引更多付费客户。",
     "keywords": "",
-    "h1": "示例域名"
+    "h1": "构建。提交。翻译。"
   },
   "og": {
-    "title": "示例域名",
-    "description": ""
+    "title": "Lingo.dev - 自动化 AI 本地化服务，适用于网页和移动应用",
+    "description": "最先进的 AI 本地化服务，直接集成到 CI/CD 中。加速发布频率，提升用户体验，吸引更多付费客户。"
   },
   "twitter": {
-    "title": "示例域名",
-    "description": ""
+    "title": "Lingo.dev - 自动化 AI 本地化服务，适用于网页和移动应用",
+    "description": "最先进的 AI 本地化服务，直接集成到 CI/CD 中。加速发布频率，提升用户体验，吸引更多付费客户。"
   }
 }

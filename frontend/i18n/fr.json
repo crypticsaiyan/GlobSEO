@@ -1,17 +1,17 @@
 {
   "greeting": "Bonjour de la part de Lingo.dev",
   "meta": {
-    "title": "Domaine d'exemple",
-    "description": "",
+    "title": "Lingo.dev - Localisation IA automatisée pour applications web et mobiles",
+    "description": "Localisation IA de pointe pour applications, directement dans CI/CD. Livrez plus rapidement, publiez plus souvent et obtenez plus de clients payants.",
     "keywords": "",
-    "h1": "Domaine d'exemple"
+    "h1": "Développez. Committez. Traduisez."
   },
   "og": {
-    "title": "Domaine d'exemple",
-    "description": ""
+    "title": "Lingo.dev - Localisation IA automatisée pour applications web et mobiles",
+    "description": "Localisation IA de pointe pour applications, directement dans CI/CD. Livrez plus rapidement, publiez plus souvent et obtenez plus de clients payants."
   },
   "twitter": {
-    "title": "Domaine d'exemple",
-    "description": ""
+    "title": "Lingo.dev - Localisation IA automatisée pour applications web et mobiles",
+    "description": "Localisation IA de pointe pour applications, directement dans CI/CD. Livrez plus rapidement, publiez plus souvent et obtenez plus de clients payants."
   }
 }

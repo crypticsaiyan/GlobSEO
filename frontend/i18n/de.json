@@ -1,17 +1,17 @@
 {
   "greeting": "Hallo von Lingo.dev",
   "meta": {
-    "title": "Beispieldomäne",
-    "description": "",
+    "title": "Lingo.dev - Automatisierte KI-Lokalisierung für Web- & Mobile-Apps",
+    "description": "Hochmoderne KI-Lokalisierung für Apps, direkt in CI/CD. Schneller ausliefern, häufiger veröffentlichen und mehr zahlende Kunden gewinnen.",
     "keywords": "",
-    "h1": "Beispieldomäne"
+    "h1": "Entwickeln. Committen. Übersetzen."
   },
   "og": {
-    "title": "Beispieldomäne",
-    "description": ""
+    "title": "Lingo.dev - Automatisierte KI-Lokalisierung für Web- & Mobile-Apps",
+    "description": "Hochmoderne KI-Lokalisierung für Apps, direkt in CI/CD. Schneller ausliefern, häufiger veröffentlichen und mehr zahlende Kunden gewinnen."
   },
   "twitter": {
-    "title": "Beispieldomäne",
-    "description": ""
+    "title": "Lingo.dev - Automatisierte KI-Lokalisierung für Web- & Mobile-Apps",
+    "description": "Hochmoderne KI-Lokalisierung für Apps, direkt in CI/CD. Schneller ausliefern, häufiger veröffentlichen und mehr zahlende Kunden gewinnen."
   }
 }

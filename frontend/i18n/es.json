@@ -1,17 +1,17 @@
 {
   "greeting": "Hola desde Lingo.dev",
   "meta": {
-    "title": "Dominio de ejemplo",
-    "description": "",
+    "title": "Lingo.dev - Localización automática con IA para aplicaciones web y móviles",
+    "description": "Localización con IA de última generación para aplicaciones, directamente en CI/CD. Lanza más rápido, publica con más frecuencia y consigue más clientes que pagan.",
     "keywords": "",
-    "h1": "Dominio de ejemplo"
+    "h1": "Construye. Confirma. Traduce."
   },
   "og": {
-    "title": "Dominio de ejemplo",
-    "description": ""
+    "title": "Lingo.dev - Localización automática con IA para aplicaciones web y móviles",
+    "description": "Localización con IA de última generación para aplicaciones, directamente en CI/CD. Lanza más rápido, publica con más frecuencia y consigue más clientes que pagan."
   },
   "twitter": {
-    "title": "Dominio de ejemplo",
-    "description": ""
+    "title": "Lingo.dev - Localización automática con IA para aplicaciones web y móviles",
+    "description": "Localización con IA de última generación para aplicaciones, directamente en CI/CD. Lanza más rápido, publica con más frecuencia y consigue más clientes que pagan."
   }
 }

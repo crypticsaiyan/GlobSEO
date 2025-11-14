@@ -1,17 +1,17 @@
 {
   "greeting": "Hello from Lingo.dev",
   "meta": {
-    "title": "Example Domain",
-    "description": "",
+    "title": "Lingo.dev - Automated AI localization for web & mobile apps",
+    "description": "State-of-the-art AI localization for apps, right in CI/CD. Ship faster, release more often, and have more paying customers.",
     "keywords": "",
-    "h1": "Example Domain"
+    "h1": "Build. Commit. Translate."
   },
   "og": {
-    "title": "Example Domain",
-    "description": ""
+    "title": "Lingo.dev - Automated AI localization for web & mobile apps",
+    "description": "State-of-the-art AI localization for apps, right in CI/CD. Ship faster, release more often, and have more paying customers."
   },
   "twitter": {
-    "title": "Example Domain",
-    "description": ""
+    "title": "Lingo.dev - Automated AI localization for web & mobile apps",
+    "description": "State-of-the-art AI localization for apps, right in CI/CD. Ship faster, release more often, and have more paying customers."
   }
 }

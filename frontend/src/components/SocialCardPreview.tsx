@@ -6,7 +6,6 @@ import {
   ChevronUp,
   Copy,
   Check,
-  Twitter,
   Facebook,
   Linkedin,
 } from "lucide-react";

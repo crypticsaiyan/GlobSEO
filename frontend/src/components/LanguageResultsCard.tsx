@@ -26,7 +26,7 @@ const LANGUAGE_CODE_MAP: Record<string, string> = {
   'Italian': 'it',
 };
 
-export function LanguageResultsCard({ language, metadata, seoScore, translations }: LanguageResultsCardProps) {
+export function LanguageResultsCard({ language, metadata, translations }: LanguageResultsCardProps) {
   const [copied, setCopied] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
