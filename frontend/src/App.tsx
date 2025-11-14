@@ -35,11 +35,13 @@ export default function App() {
   const [seoScore, setSeoScore] = useState<SEOAnalysis | null>(null);
   const [translations, setTranslations] = useState<TranslationResult>({});
   const [error, setError] = useState<string | null>(null);
+  const [processingStep, setProcessingStep] = useState<string>('');
 
   const handleGenerate = async (url: string, primaryKeyword?: string) => {
     setIsGenerating(true);
     setError(null);
     setShowResults(false);
+    setProcessingStep('Scraping webpage...');
 
     try {
       // Convert language names to codes (excluding English as it's the source)
@@ -51,11 +53,18 @@ export default function App() {
       if (targetLanguageCodes.length > 0) {
         // Use complete pipeline with translations
         console.log("🌍 Running complete pipeline with translations...");
+        
+        // Simulate step updates
+        setTimeout(() => setProcessingStep('Extracting metadata...'), 500);
+        setTimeout(() => setProcessingStep(`Translating to ${targetLanguageCodes.length} languages...`), 1500);
+        setTimeout(() => setProcessingStep('Analyzing SEO score...'), 3000);
+        
         const result = await api.scrapeTranslateScore(
           url,
           targetLanguageCodes,
           primaryKeyword
         );
+        
         setMetadata(result.metadata);
         setSeoScore(result.seoScore);
         setTranslations(result.translations);
@@ -63,7 +72,12 @@ export default function App() {
       } else {
         // Only scrape and score (no translations)
         console.log("📊 Running scrape and score only...");
+        
+        setTimeout(() => setProcessingStep('Extracting metadata...'), 500);
+        setTimeout(() => setProcessingStep('Analyzing SEO score...'), 1500);
+        
         const result = await api.scrapeAndScore(url, primaryKeyword);
+        
         setMetadata(result.metadata);
         setSeoScore(result.seoScore);
         setTranslations({});
@@ -75,6 +89,7 @@ export default function App() {
       console.error("Error:", err);
     } finally {
       setIsGenerating(false);
+      setProcessingStep('');
     }
   };
 
@@ -107,6 +122,7 @@ export default function App() {
                 <InputPanel
                   onGenerate={handleGenerate}
                   isGenerating={isGenerating}
+                  processingStep={processingStep}
                   selectedLanguages={selectedLanguages}
                   setSelectedLanguages={setSelectedLanguages}
                 />

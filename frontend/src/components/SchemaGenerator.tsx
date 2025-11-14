@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import { Code2, Copy, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from './ui/badge';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { customSyntaxTheme, defaultCustomStyle } from '../styles/syntaxTheme';
+
+interface SchemaGeneratorProps {
+  language: string;
+  title: string;
+  description: string;
+  url: string;
+}
 
 interface SchemaGeneratorProps {
   language: string;
@@ -128,21 +137,26 @@ export function SchemaGenerator({ language, title, description, url }: SchemaGen
               <span className="text-xs text-white/50 font-medium">JSON-LD Schema</span>
               <span className="text-xs text-white/30">{schemaJSON.split('\n').length} lines</span>
             </div>
-            <pre className="text-xs text-white/70 font-mono leading-relaxed">
-              <code>{schemaJSON}</code>
-            </pre>
+            <SyntaxHighlighter
+              language="json"
+              style={customSyntaxTheme}
+              customStyle={defaultCustomStyle}
+              wrapLongLines={false}
+            >
+              {schemaJSON}
+            </SyntaxHighlighter>
           </div>
 
           {/* Implementation Instructions */}
-          <div className="bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20 rounded-lg p-4">
+          <div className="bg-gradient-to-r from-[#a3ff12]/10 via-[#a3ff12]/5 to-transparent border border-[#a3ff12]/20 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <div className="px-2 py-1 bg-blue-500/20 rounded-lg">
-                <Code2 className="w-4 h-4 text-blue-400" />
+              <div className="px-2 py-1 bg-[#a3ff12]/20 rounded-lg">
+                <Code2 className="w-4 h-4 text-[#a3ff12]" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-blue-300 mb-2">How to implement</p>
-                <p className="text-xs text-blue-400/80 leading-relaxed">
-                  Copy this JSON-LD schema and place it in the <code className="px-1.5 py-0.5 bg-blue-500/20 rounded text-blue-300">&lt;head&gt;</code> section of your HTML document. This structured data helps search engines better understand your page content and can enhance your search results with rich snippets.
+                <p className="text-sm font-medium text-[#a3ff12] mb-2">How to implement</p>
+                <p className="text-xs text-white/80 leading-relaxed">
+                  Copy this JSON-LD schema and place it in the <code className="px-1.5 py-0.5 bg-[#a3ff12]/20 rounded text-[#a3ff12]">&lt;head&gt;</code> section of your HTML document. This structured data helps search engines better understand your page content and can enhance your search results with rich snippets.
                 </p>
               </div>
             </div>

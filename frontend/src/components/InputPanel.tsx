@@ -8,11 +8,12 @@ import { X, Link2, Sparkles } from 'lucide-react';
 interface InputPanelProps {
   onGenerate: (url: string, primaryKeyword?: string) => Promise<void>;
   isGenerating: boolean;
+  processingStep: string;
   selectedLanguages: string[];
   setSelectedLanguages: (languages: string[]) => void;
 }
 
-export function InputPanel({ onGenerate, isGenerating, selectedLanguages, setSelectedLanguages }: InputPanelProps) {
+export function InputPanel({ onGenerate, isGenerating, processingStep, selectedLanguages, setSelectedLanguages }: InputPanelProps) {
   const [url, setUrl] = useState('');
   const [primaryKeyword, setPrimaryKeyword] = useState('');
   const availableLanguages = ['English', 'Spanish', 'French', 'German', 'Japanese', 'Chinese', 'Portuguese', 'Italian'];
@@ -104,7 +105,7 @@ export function InputPanel({ onGenerate, isGenerating, selectedLanguages, setSel
           {isGenerating ? (
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
-              Analyzing...
+              {processingStep || 'Analyzing...'}
             </div>
           ) : (
             'Analyze & Generate SEO'

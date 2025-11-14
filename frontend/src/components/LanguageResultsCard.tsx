@@ -3,6 +3,8 @@ import { Copy, Check, ChevronDown, ChevronUp, Code2, FileJson } from 'lucide-rea
 import { Badge } from '../components/ui/badge';
 import { SchemaGenerator } from './SchemaGenerator';
 import { SocialCardPreview } from './SocialCardPreview';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { customSyntaxTheme, defaultCustomStyle } from '../styles/syntaxTheme';
 import type { Metadata, SEOAnalysis, TranslationResult } from '../services/api';
 
 interface LanguageResultsCardProps {
@@ -282,9 +284,14 @@ export function LanguageResultsCard({ language, metadata, seoScore, translations
                 <span className="text-xs text-white/50 font-medium">Meta Tags</span>
                 <span className="text-xs text-white/30">{htmlMeta.split('\n').length} tags</span>
               </div>
-              <pre className="text-xs text-white/70 font-mono leading-relaxed">
-                <code>{htmlMeta}</code>
-              </pre>
+              <SyntaxHighlighter
+                language="html"
+                style={customSyntaxTheme}
+                customStyle={defaultCustomStyle}
+                wrapLongLines={false}
+              >
+                {htmlMeta}
+              </SyntaxHighlighter>
             </div>
           )}
         </div>
@@ -335,9 +342,14 @@ export function LanguageResultsCard({ language, metadata, seoScore, translations
                 <span className="text-xs text-white/50 font-medium">JSON Data</span>
                 <span className="text-xs text-white/30">{Object.keys(jsonOutput).length} fields</span>
               </div>
-              <pre className="text-xs text-white/70 font-mono leading-relaxed">
-                <code>{JSON.stringify(jsonOutput, null, 2)}</code>
-              </pre>
+              <SyntaxHighlighter
+                language="json"
+                style={customSyntaxTheme}
+                customStyle={defaultCustomStyle}
+                wrapLongLines={false}
+              >
+                {JSON.stringify(jsonOutput, null, 2)}
+              </SyntaxHighlighter>
             </div>
           )}
         </div>

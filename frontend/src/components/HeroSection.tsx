@@ -1,25 +1,25 @@
-import { useState } from 'react';
-import { Button } from '../components/ui/button';
-import { ArrowRight, Play } from 'lucide-react';
-import { Badge } from '../components/ui/badge';
+import { useState } from "react";
+import { Button } from "../components/ui/button";
+import { ArrowRight, Play } from "lucide-react";
+import { Badge } from "../components/ui/badge";
 
 export function HeroSection() {
-  const [activeImage, setActiveImage] = useState<'image' | 'jp'>('image');
+  const [activeImage, setActiveImage] = useState<"image" | "jp">("jp");
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-[#0a0a0a] via-[#0a0a0a] to-transparent">
       <div className="max-w-[1400px] mx-auto px-6 pt-20 pb-32">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-        
           <div className="text-center lg:text-left">
             <h1 className="text-5xl md:text-6xl lg:text-7xl mb-6 tracking-tight leading-[1.1]">
               <div className="mb-2">Rank.</div>
               <div className="mb-2">Optimize.</div>
               <div className="text-[#a3ff12]">Globalize.</div>
             </h1>
-            
+
             <p className="text-lg text-white/60 mb-10 max-w-lg mx-auto lg:mx-0 leading-relaxed">
-              Generate SEO metadata and optimize content using AI.
+              Generate SEO metadata and optimize content using AI in
+              <i className="text-white"> seconds</i>.
             </p>
 
             {/* <div className="flex items-center gap-4 justify-center lg:justify-start flex-wrap">
@@ -57,42 +57,46 @@ export function HeroSection() {
               {/* Stacked Images Effect - Click to Bring to Front */}
               <div className="relative">
                 {/* Back image - jp.png */}
-                <div 
-                  onClick={() => setActiveImage('jp')}
+                <div
+                  onClick={() => setActiveImage("jp")}
                   className="absolute w-full rounded-2xl shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500 cursor-pointer transition-all ease-in-out"
-                  style={{ 
-                    top: '253px', 
-                    left: '-199px',
-                    zIndex: activeImage === 'jp' ? 30 : 10,
-                    transform: activeImage === 'jp' ? 'scale(1.02)' : 'scale(1)',
-                    transitionDuration: '500ms',
-                    boxShadow: activeImage === 'jp' 
-                      ? '0 0 0 2px #a3ff12, 0 0px 30px rgba(163, 255, 18, 0.4)' 
-                      : '0 0 0 2px rgba(255, 255, 255, 0.1)'
+                  style={{
+                    top: "300px",
+                    left: "-150px",
+                    zIndex: activeImage === "jp" ? 30 : 10,
+                    transform:
+                      activeImage === "jp" ? "scale(1.02)" : "scale(1)",
+                    transitionDuration: "500ms",
+                    boxShadow:
+                      activeImage === "jp"
+                        ? "0 0 0 2px #a3ff12, 0 0px 30px rgba(163, 255, 18, 0.4)"
+                        : "0 0 0 2px rgba(255, 255, 255, 0.1)",
                   }}
                 >
-                  <img 
-                    src="/jp.png" 
-                    alt="Japanese Translation Preview" 
+                  <img
+                    src="/jp.png"
+                    alt="Japanese Translation Preview"
                     className="w-full h-auto rounded-2xl"
                   />
                 </div>
                 {/* Front image - image.png */}
-                <div 
-                  onClick={() => setActiveImage('image')}
+                <div
+                  onClick={() => setActiveImage("image")}
                   className="relative rounded-2xl shadow-2xl animate-in fade-in slide-in-from-top-4 duration-700 cursor-pointer transition-all ease-in-out"
                   style={{
-                    zIndex: activeImage === 'image' ? 30 : 20,
-                    transform: activeImage === 'image' ? 'scale(1.02)' : 'scale(1)',
-                    transitionDuration: '500ms',
-                    boxShadow: activeImage === 'image' 
-                      ? '0 0 0 2px #a3ff12, 0 0px 30px rgba(163, 255, 18, 0.4)' 
-                      : '0 0 0 2px rgba(255, 255, 255, 0.1)'
+                    zIndex: activeImage === "image" ? 30 : 20,
+                    transform:
+                      activeImage === "image" ? "scale(1.02)" : "scale(1)",
+                    transitionDuration: "500ms",
+                    boxShadow:
+                      activeImage === "image"
+                        ? "0 0 0 2px #a3ff12, 0 0px 30px rgba(163, 255, 18, 0.4)"
+                        : "0 0 0 2px rgba(255, 255, 255, 0.1)",
                   }}
                 >
-                  <img 
-                    src="/image.png" 
-                    alt="GlobSEO Platform Preview" 
+                  <img
+                    src="/image.png"
+                    alt="GlobSEO Platform Preview"
                     className="w-full h-auto rounded-2xl"
                   />
                 </div>

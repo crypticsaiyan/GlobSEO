@@ -1,4 +1,4 @@
-import { Moon, Sun, Github, Star } from 'lucide-react';
+import { Moon, Sun, Github, Star, Globe } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { useState } from 'react';
@@ -19,11 +19,7 @@ export function Header() {
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 bg-[#a3ff12] rounded-sm flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-black">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor"/>
-                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2"/>
-                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2"/>
-              </svg>
+              <Globe className="w-4 h-4 text-black" />
             </div>
             <span className="text-white">GlobSEO</span>
           </div>
@@ -50,12 +46,9 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/5 gap-2 hidden md:flex cursor-pointer">
+          <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/5 gap-2 cursor-pointer">
             <Github className="w-4 h-4" />
             <span className="text-sm">Github</span>
-          </Button>
-          <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/5 cursor-pointer">
-            <Sun className="w-4 h-4" />
           </Button>
         </div>
       </div>

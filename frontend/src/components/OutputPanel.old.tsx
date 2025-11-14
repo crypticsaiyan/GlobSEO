@@ -207,6 +207,7 @@ export function OutputPanel({ showResults, results, error }: OutputPanelProps) {
           </div>
           <CodeBlock
             code={generateAllLanguagesHTMLMetaTags()}
+            language="html"
           />
         </div>          {/* JSON Output */}
           <div>
@@ -245,6 +246,7 @@ export function OutputPanel({ showResults, results, error }: OutputPanelProps) {
               null,
               2,
             )}
+            language="json"
           />
         </div>
       </div>
