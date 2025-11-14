@@ -1,0 +1,34 @@
+{
+  "defaultLanguages": ["es", "fr"],
+  "supportedLanguages": [
+    "es", "fr", "de", "it", "pt", 
+    "ja", "ko", "zh", "ar", "ru",
+    "nl", "pl", "tr", "sv", "da"
+  ],
+  "scraper": {
+    "timeout": 30000,
+    "waitUntil": "domcontentloaded",
+    "headless": true
+  },
+  "translation": {
+    "provider": "lingo",
+    "fallbackEnabled": true
+  },
+  "output": {
+    "directory": "./output",
+    "updateI18n": true,
+    "i18nDirectory": "../frontend/i18n"
+  },
+  "metadata": {
+    "fieldsToTranslate": [
+      "title",
+      "description",
+      "keywords",
+      "ogTitle",
+      "ogDescription",
+      "twitterTitle",
+      "twitterDescription",
+      "h1"
+    ]
+  }
+}
