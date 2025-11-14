@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { Copy, Check, ChevronDown, ChevronUp, Wand2 } from 'lucide-react';
+import { Copy, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '../components/ui/badge';
-import { MetadataQualityScore } from './MetadataQualityScore';
-import { SmartRewriteSuggestions } from './SmartRewriteSuggestions';
 import { SchemaGenerator } from './SchemaGenerator';
 import { SocialCardPreview } from './SocialCardPreview';
+import type { Metadata, SEOAnalysis } from '../services/api';
 
 interface LanguageResultsCardProps {
   language: string;
+  metadata: Metadata | null;
+  seoScore: SEOAnalysis | null;
 }
 
 // Mock data generator for different languages
@@ -58,7 +59,7 @@ const generateMockData = (language: string) => {
   return mockData[language] || mockData.English;
 };
 
-export function LanguageResultsCard({ language }: LanguageResultsCardProps) {
+export function LanguageResultsCard({ language, metadata, seoScore }: LanguageResultsCardProps) {
   const [copied, setCopied] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
@@ -129,15 +130,6 @@ export function LanguageResultsCard({ language }: LanguageResultsCardProps) {
 
       {/* Results Sections */}
       <div className="p-5 space-y-4">
-        {/* Metadata Quality Score */}
-        <MetadataQualityScore
-          title={mockResults.title}
-          description={mockResults.description}
-          keywords={mockResults.keywords}
-        />
-
-        <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-
         {/* SEO Title */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -204,37 +196,6 @@ export function LanguageResultsCard({ language }: LanguageResultsCardProps) {
               </Badge>
             ))}
           </div>
-        </div>
-
-        <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-
-        {/* Smart Rewrite Suggestions (collapsible) */}
-        <div>
-          <div
-            className="flex items-center justify-between cursor-pointer hover:bg-white/5 -mx-2 px-2 py-2 rounded transition-colors"
-            onClick={() => toggleSection('rewrites')}
-          >
-            <div className="flex items-center gap-2">
-              <Wand2 className="w-4 h-4 text-white/40" />
-              <span className="text-xs text-white/40 uppercase tracking-wider">Smart Rewrites</span>
-            </div>
-            <div className="flex items-center gap-2">
-              {expandedSections.has('rewrites') ? (
-                <ChevronUp className="w-4 h-4 text-white/40" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-white/40" />
-              )}
-            </div>
-          </div>
-
-          {expandedSections.has('rewrites') && (
-            <div className="mt-2 bg-[#0a0a0a] rounded-lg border border-white/10 p-3 animate-in slide-in-from-top-2 duration-200">
-              <SmartRewriteSuggestions
-                originalTitle={mockResults.title}
-                originalDescription={mockResults.description}
-              />
-            </div>
-          )}
         </div>
 
         <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>

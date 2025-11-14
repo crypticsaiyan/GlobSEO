@@ -5,19 +5,33 @@ import { InputPanel } from './components/InputPanel';
 import { OutputPanel } from './components/OutputPanel';
 import { AnnouncementBanner } from './components/AnnouncementBanner';
 import { FeaturesSection } from './components/FeaturesSection';
+import { api, type Metadata, type SEOAnalysis } from './services/api';
 
 export default function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['English', 'Spanish']);
+  const [metadata, setMetadata] = useState<Metadata | null>(null);
+  const [seoScore, setSeoScore] = useState<SEOAnalysis | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleGenerate = () => {
+  const handleGenerate = async (url: string, primaryKeyword?: string) => {
     setIsGenerating(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsGenerating(false);
+    setError(null);
+    setShowResults(false);
+    
+    try {
+      // Scrape and get SEO score
+      const result = await api.scrapeAndScore(url, primaryKeyword);
+      setMetadata(result.metadata);
+      setSeoScore(result.seoScore);
       setShowResults(true);
-    }, 1500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to analyze URL');
+      console.error('Error:', err);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -54,10 +68,19 @@ export default function App() {
                 />
               </div>
 
+              {/* Error Message */}
+              {error && (
+                <div className="max-w-[800px] mx-auto bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-red-400">
+                  <p className="text-sm">{error}</p>
+                </div>
+              )}
+
               {/* Output Panel - Full Width with Language Cards */}
               <OutputPanel 
                 showResults={showResults} 
                 selectedLanguages={selectedLanguages}
+                metadata={metadata}
+                seoScore={seoScore}
               />
             </div>
           </div>

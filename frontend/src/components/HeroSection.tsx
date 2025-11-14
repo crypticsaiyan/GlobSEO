@@ -16,11 +16,10 @@ export function HeroSection() {
             </h1>
             
             <p className="text-lg text-white/60 mb-10 max-w-lg mx-auto lg:mx-0 leading-relaxed">
-              AI localization for teams that <span className="italic text-white/80">ship fast</span>. 
-              Generate SEO metadata, translate apps, and optimize content using the best LLM models.
+              Generate SEO metadata and optimize content using AI.
             </p>
 
-            <div className="flex items-center gap-4 justify-center lg:justify-start flex-wrap">
+            {/* <div className="flex items-center gap-4 justify-center lg:justify-start flex-wrap">
               <Button className="bg-[#a3ff12] hover:bg-[#92e610] text-black h-12 px-8 text-base">
                 Get started
               </Button>
@@ -28,7 +27,7 @@ export function HeroSection() {
                 <Play className="w-4 h-4" />
                 Watch demo
               </Button>
-            </div>
+            </div> */}
 
             {/* Stats */}
             <div className="flex items-center gap-8 mt-12 justify-center lg:justify-start">

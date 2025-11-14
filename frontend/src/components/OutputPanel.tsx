@@ -1,13 +1,17 @@
-import { useState } from 'react';
 import { LanguageResultsCard } from '../components/LanguageResultsCard';
+import { MetadataQualityScore } from '../components/MetadataQualityScore';
+import { SmartRewriteSuggestions } from '../components/SmartRewriteSuggestions';
 import { Sparkles } from 'lucide-react';
+import type { Metadata, SEOAnalysis } from '../services/api';
 
 interface OutputPanelProps {
   showResults: boolean;
   selectedLanguages: string[];
+  metadata: Metadata | null;
+  seoScore: SEOAnalysis | null;
 }
 
-export function OutputPanel({ showResults, selectedLanguages }: OutputPanelProps) {
+export function OutputPanel({ showResults, selectedLanguages, metadata, seoScore }: OutputPanelProps) {
   if (!showResults) {
     return (
       <div className="bg-gradient-to-br from-[#141414] to-[#0f0f0f] border border-white/10 rounded-xl p-8 flex flex-col items-center justify-center min-h-[400px] transition-all duration-300 relative overflow-hidden">
@@ -28,8 +32,8 @@ export function OutputPanel({ showResults, selectedLanguages }: OutputPanelProps
   }
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
+    <div className="space-y-8">
+      <div className="text-center">
         <h3 className="text-2xl text-white/90 mb-2">
           Generated <span className="text-[#a3ff12]">Results</span>
         </h3>
@@ -38,11 +42,57 @@ export function OutputPanel({ showResults, selectedLanguages }: OutputPanelProps
         </p>
       </div>
 
-      {/* Language Results Grid */}
+      {/* Quality Score and Smart Rewrites Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {selectedLanguages.map((language) => (
-          <LanguageResultsCard key={language} language={language} />
-        ))}
+        {/* SEO Quality Score */}
+        <div className="bg-gradient-to-br from-[#141414] to-[#0f0f0f] border border-white/10 rounded-xl p-6">
+          <h4 className="text-white/90 tracking-tight text-lg mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#a3ff12]"></span>
+            SEO Quality Analysis
+          </h4>
+          {metadata && (
+            <MetadataQualityScore
+              title={metadata.title || ''}
+              description={metadata.description || ''}
+              keywords={metadata.keywords ? metadata.keywords.split(',').map(k => k.trim()).filter(Boolean) : []}
+              seoScore={seoScore}
+            />
+          )}
+        </div>
+
+        {/* Smart Rewrites */}
+        <div className="bg-gradient-to-br from-[#141414] to-[#0f0f0f] border border-white/10 rounded-xl p-6">
+          <h4 className="text-white/90 tracking-tight text-lg mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#a3ff12]"></span>
+            Smart Rewrites
+          </h4>
+          {metadata && (
+            <SmartRewriteSuggestions
+              originalTitle={metadata.title || ''}
+              originalDescription={metadata.description || ''}
+              smartRewrites={seoScore?.smart_rewrites}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Language Translation Cards */}
+      <div>
+        <div className="mb-4">
+          <h4 className="text-white/80 text-sm uppercase tracking-wider">
+            Translations ({selectedLanguages.length})
+          </h4>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {selectedLanguages.map((language) => (
+            <LanguageResultsCard 
+              key={language} 
+              language={language}
+              metadata={metadata}
+              seoScore={seoScore}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

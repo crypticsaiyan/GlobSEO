@@ -1,17 +1,20 @@
+import { useState } from 'react';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { X, Link2 } from 'lucide-react';
+import { X, Link2, Sparkles } from 'lucide-react';
 
 interface InputPanelProps {
-  onGenerate: () => void;
+  onGenerate: (url: string, primaryKeyword?: string) => Promise<void>;
   isGenerating: boolean;
   selectedLanguages: string[];
   setSelectedLanguages: (languages: string[]) => void;
 }
 
 export function InputPanel({ onGenerate, isGenerating, selectedLanguages, setSelectedLanguages }: InputPanelProps) {
+  const [url, setUrl] = useState('');
+  const [primaryKeyword, setPrimaryKeyword] = useState('');
   const availableLanguages = ['English', 'Spanish', 'French', 'German', 'Japanese', 'Chinese', 'Portuguese', 'Italian'];
 
   const toggleLanguage = (lang: string) => {
@@ -22,8 +25,15 @@ export function InputPanel({ onGenerate, isGenerating, selectedLanguages, setSel
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (url.trim()) {
+      await onGenerate(url.trim(), primaryKeyword.trim() || undefined);
+    }
+  };
+
   return (
-    <div className="bg-gradient-to-br from-[#141414] to-[#0f0f0f] border border-white/10 rounded-xl p-7 transition-all duration-300 hover:border-white/20 shadow-xl">
+    <form onSubmit={handleSubmit} className="bg-gradient-to-br from-[#141414] to-[#0f0f0f] border border-white/10 rounded-xl p-7 transition-all duration-300 hover:border-white/20 shadow-xl">
       <div className="flex items-center gap-2 mb-6">
         <div className="w-8 h-8 rounded-lg bg-[#a3ff12]/10 flex items-center justify-center">
           <Link2 className="w-4 h-4 text-[#a3ff12]" />
@@ -36,29 +46,28 @@ export function InputPanel({ onGenerate, isGenerating, selectedLanguages, setSel
       <div className="space-y-5">
         <div>
           <label className="block text-sm text-white/50 mb-2.5">
-            Webpage URL
+            Webpage URL *
           </label>
           <Input
             type="url"
             placeholder="https://example.com"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            required
             className="bg-[#0a0a0a] border-white/10 focus:border-[#a3ff12]/50 focus:ring-[#a3ff12]/20 text-white placeholder:text-white/30 h-11 transition-all"
           />
         </div>
 
-        <div className="relative flex items-center gap-4 my-6">
-          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-          <span className="text-xs text-white/40 bg-[#0a0a0a] px-2">or</span>
-          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-        </div>
-
         <div>
           <label className="block text-sm text-white/50 mb-2.5">
-            Page Content
+            Primary Keyword (Optional)
           </label>
-          <Textarea
-            placeholder="Paste your page content here..."
-            rows={7}
-            className="bg-[#0a0a0a] border-white/10 focus:border-[#a3ff12]/50 focus:ring-[#a3ff12]/20 text-white placeholder:text-white/30 resize-none transition-all"
+          <Input
+            type="text"
+            placeholder="e.g., SEO optimization, web development"
+            value={primaryKeyword}
+            onChange={(e) => setPrimaryKeyword(e.target.value)}
+            className="bg-[#0a0a0a] border-white/10 focus:border-[#a3ff12]/50 focus:ring-[#a3ff12]/20 text-white placeholder:text-white/30 h-11 transition-all"
           />
         </div>
 
@@ -88,20 +97,20 @@ export function InputPanel({ onGenerate, isGenerating, selectedLanguages, setSel
         </div>
 
         <Button
-          onClick={onGenerate}
-          disabled={isGenerating}
+          type="submit"
+          disabled={isGenerating || !url.trim()}
           className="w-full bg-[#a3ff12] hover:bg-[#92e610] text-black h-12 rounded-lg transition-all duration-300 disabled:opacity-50 shadow-lg shadow-[#a3ff12]/20 hover:shadow-xl hover:shadow-[#a3ff12]/30"
         >
           {isGenerating ? (
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
-              Generating...
+              Analyzing...
             </div>
           ) : (
-            'Generate SEO Metadata'
+            'Analyze & Generate SEO'
           )}
         </Button>
       </div>
-    </div>
+    </form>
   );
 }
