@@ -13,5 +13,10 @@
   "twitter": {
     "title": "Lingo.dev - Localisation IA automatisée pour applications web et mobiles",
     "description": "Localisation IA de pointe pour applications, directement dans CI/CD. Livrez plus rapidement, publiez plus souvent et obtenez plus de clients payants."
-  }
+  },
+  "metadata": {
+    "greeting": "Bonjour",
+    "message": "Ceci est un test"
+  },
+  "_updated": "2025-11-15T19:22:38.045Z"
 }

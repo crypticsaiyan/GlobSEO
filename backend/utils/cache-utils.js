@@ -11,7 +11,7 @@ import path from 'path';
 
 const CACHE_DIR = path.join(process.cwd(), '.cache');
 const CACHE_FILE = path.join(CACHE_DIR, 'translations.json');
-const CACHE_EXPIRY_HOURS = 24; // Cache expires after 24 hours
+const CACHE_EXPIRY_HOURS = 24; 
 
 // In-memory cache
 const memoryCache = new Map();
@@ -55,9 +55,9 @@ export function initializeCache() {
         }
       }
 
-      console.log(`📦 Cache loaded: ${validEntries} valid entries, ${expiredEntries} expired`);
+      console.log(`Cache loaded: ${validEntries} valid entries, ${expiredEntries} expired`);
     } catch (error) {
-      console.warn('⚠️  Failed to load cache:', error.message);
+      console.warn('Failed to load cache:', error.message);
     }
   }
 }
@@ -94,7 +94,7 @@ export function getCachedTranslation(cacheKey) {
     return null;
   }
 
-  console.log(`✨ Cache HIT for key: ${cacheKey.substring(0, 8)}...`);
+  console.log(`Cache HIT for key: ${cacheKey.substring(0, 8)}...`);
   return entry.translations;
 }
 
@@ -113,9 +113,8 @@ export function setCachedTranslation(cacheKey, translations, targetLanguages) {
   };
 
   memoryCache.set(cacheKey, entry);
-  console.log(`💾 Cached translation for key: ${cacheKey.substring(0, 8)}...`);
+  console.log(`Cached translation for key: ${cacheKey.substring(0, 8)}...`);
 
-  // Persist to disk asynchronously
   persistCache();
 }
 
@@ -169,7 +168,7 @@ function persistCache() {
 
     fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
   } catch (error) {
-    console.warn('⚠️  Failed to persist cache:', error.message);
+    console.warn('Failed to persist cache:', error.message);
   }
 }
 
@@ -187,7 +186,7 @@ export function cleanupCache() {
   }
 
   if (removed > 0) {
-    console.log(`🧹 Cleaned up ${removed} expired cache entries`);
+    console.log(`Cleaned up ${removed} expired cache entries`);
     persistCache();
   }
 }
@@ -233,7 +232,7 @@ export function clearCache() {
     fs.unlinkSync(CACHE_FILE);
   }
 
-  console.log('🗑️  Cache cleared');
+  console.log('Cache cleared');
 }
 
 // Initialize cache on module load

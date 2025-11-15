@@ -5,7 +5,7 @@
  * Tests both the module directly and the API endpoints
  */
 
-import { generateSEOScore } from './seo-score.js';
+import { generateSEOScore } from '../utils/seo-score.js';
 import dotenv from 'dotenv';
 
 // Load environment variables

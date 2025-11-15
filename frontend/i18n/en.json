@@ -1,17 +1,19 @@
 {
   "greeting": "Hello from Lingo.dev",
   "meta": {
-    "title": "Example Domain",
-    "description": "",
+    "title": "LinkedIn: Log In or Sign Up",
+    "description": "1 billion members | Manage your professional identity. Build and engage with your professional network. Access knowledge, insights and opportunities.",
     "keywords": "",
-    "h1": "Example Domain"
+    "h1": "\n          Explore jobs and grow your professional network\n        "
   },
   "og": {
-    "title": "Example Domain",
-    "description": ""
+    "title": "LinkedIn: Log In or Sign Up",
+    "description": "1 billion members | Manage your professional identity. Build and engage with your professional network. Access knowledge, insights and opportunities."
   },
   "twitter": {
-    "title": "Example Domain",
-    "description": ""
-  }
+    "title": "LinkedIn: Log In or Sign Up",
+    "description": "1 billion members | Manage your professional identity. Build and engage with your professional network. Access knowledge, insights and opportunities."
+  },
+  "_sourceUrl": "https://crypticsaiyan.github.io",
+  "_sourceHost": "linkedin.com"
 }

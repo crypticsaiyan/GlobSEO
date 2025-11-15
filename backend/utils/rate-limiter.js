@@ -121,6 +121,6 @@ setInterval(() => {
   }
   
   if (cleaned > 0) {
-    console.log(`🧹 Cleaned up ${cleaned} expired rate limit records`);
+    console.log(`* Cleaned up ${cleaned} expired rate limit records`);
   }
 }, 10 * 60 * 1000);

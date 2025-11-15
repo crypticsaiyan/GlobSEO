@@ -1,17 +1,19 @@
 {
   "greeting": "Hola desde Lingo.dev",
   "meta": {
-    "title": "Lingo.dev - Localización automática con IA para aplicaciones web y móviles",
-    "description": "Localización con IA de última generación para aplicaciones, directamente en CI/CD. Lanza más rápido, publica con más frecuencia y consigue más clientes de pago.",
+    "title": "LinkedIn: iniciar sesión o registrarse",
+    "description": "1.000 millones de miembros | Gestiona tu identidad profesional. Construye y participa en tu red profesional. Accede a conocimientos, ideas y oportunidades.",
     "keywords": "",
-    "h1": "Construye. Confirma. Traduce."
+    "h1": "\n          Explora empleos y haz crecer tu red profesional\n        "
   },
   "og": {
-    "title": "Lingo.dev - Localización automática con IA para aplicaciones web y móviles",
-    "description": "Localización con IA de última generación para aplicaciones, directamente en CI/CD. Lanza más rápido, publica con más frecuencia y consigue más clientes de pago."
+    "title": "LinkedIn: iniciar sesión o registrarse",
+    "description": "1.000 millones de miembros | Gestiona tu identidad profesional. Construye y participa en tu red profesional. Accede a conocimientos, ideas y oportunidades."
   },
   "twitter": {
-    "title": "Lingo.dev - Localización automática con IA para aplicaciones web y móviles",
-    "description": "Localización con IA de última generación para aplicaciones, directamente en CI/CD. Lanza más rápido, publica con más frecuencia y consigue más clientes de pago."
-  }
+    "title": "LinkedIn: iniciar sesión o registrarse",
+    "description": "1.000 millones de miembros | Gestiona tu identidad profesional. Construye y participa en tu red profesional. Accede a conocimientos, ideas y oportunidades."
+  },
+  "_sourceUrl": "https://crypticsaiyan.github.io",
+  "_sourceHost": "example.cfh"
 }

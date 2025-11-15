@@ -5,12 +5,10 @@
  * This script combines scraping and translation into a single workflow
  */
 
-import { scrapeMetadata } from './scraper.js';
-import { translateWithLingo, processMetadataTranslations, updateI18nFiles } from './lingo-translate.js';
+import { scrapeMetadata } from './utils/scraper.js';
+import { processMetadataTranslations, updateI18nFiles } from './utils/lingo-translate.js';
 import fs from 'fs';
 import path from 'path';
-
-const SUPPORTED_LANGUAGES = ['es', 'fr', 'de', 'it', 'pt', 'ja', 'ko', 'zh', 'ar', 'ru'];
 
 /**
  * Complete scrape and translate pipeline
@@ -21,9 +19,9 @@ const SUPPORTED_LANGUAGES = ['es', 'fr', 'de', 'it', 'pt', 'ja', 'ko', 'zh', 'ar
 async function runPipeline(url, targetLanguages, options = {}) {
   const startTime = Date.now();
   
-  console.log('🚀 Starting metadata scraping and translation pipeline...\n');
-  console.log(`📍 URL: ${url}`);
-  console.log(`🌍 Target Languages: ${targetLanguages.join(', ')}\n`);
+  console.log('>> Starting metadata scraping and translation pipeline...\n');
+  console.log(`>> URL: ${url}`);
+  console.log(`>> Target Languages: ${targetLanguages.join(', ')}\n`);
 
   try {
     // Step 1: Scrape metadata
@@ -32,7 +30,7 @@ async function runPipeline(url, targetLanguages, options = {}) {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     
     const metadata = await scrapeMetadata(url);
-    console.log('✅ Metadata scraped successfully!\n');
+    console.log('[*] Metadata scraped successfully!\n');
     
     if (options.verbose) {
       console.log('Scraped metadata:');
@@ -46,7 +44,7 @@ async function runPipeline(url, targetLanguages, options = {}) {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     
     const translations = await processMetadataTranslations(metadata, targetLanguages);
-    console.log('\n✅ All translations completed!\n');
+    console.log('\n[*] All translations completed!\n');
 
     // Step 3: Update i18n files (if not disabled)
     if (!options.skipI18nUpdate) {
@@ -55,7 +53,7 @@ async function runPipeline(url, targetLanguages, options = {}) {
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
       
       updateI18nFiles(translations);
-      console.log('\n✅ i18n files updated!\n');
+      console.log('\n[*] i18n files updated!\n');
     }
 
     // Step 4: Save results
@@ -82,21 +80,21 @@ async function runPipeline(url, targetLanguages, options = {}) {
     const outputFile = path.join(outputDir, `metadata-${timestamp}.json`);
     fs.writeFileSync(outputFile, JSON.stringify(result, null, 2));
     
-    console.log(`💾 Results saved to: ${outputFile}\n`);
+    console.log(`** Results saved to: ${outputFile}\n`);
 
     // Summary
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('✨ PIPELINE COMPLETED SUCCESSFULLY');
+    console.log('[*] PIPELINE COMPLETED SUCCESSFULLY');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-    console.log(`⏱️  Total time: ${(Date.now() - startTime) / 1000}s`);
+    console.log(`* Total time: ${(Date.now() - startTime) / 1000}s`);
     console.log(`🌐 URL: ${url}`);
-    console.log(`📝 Original language: ${metadata.lang || 'unknown'}`);
-    console.log(`🗣️  Translations: ${targetLanguages.length} languages`);
-    console.log(`📄 Output: ${outputFile}\n`);
+    console.log(`* Original language: ${metadata.lang || 'unknown'}`);
+    console.log(`* Translations: ${targetLanguages.length} languages`);
+    console.log(`* Output: ${outputFile}\n`);
 
     return result;
   } catch (error) {
-    console.error('\n❌ Pipeline failed:', error.message);
+    console.error('\n[ERROR] Pipeline failed:', error.message);
     console.error(error.stack);
     throw error;
   }
@@ -157,9 +155,6 @@ OPTIONS:
   --skip-i18n            Don't update i18n files in frontend
   -h, --help             Show this help message
 
-LANGUAGES:
-  Supported: ${SUPPORTED_LANGUAGES.join(', ')}
-
 EXAMPLES:
   # Scrape and translate to Spanish and French
   node pipeline.js https://example.com es fr
@@ -191,7 +186,7 @@ async function main() {
   }
 
   if (!options.url) {
-    console.error('❌ Error: URL is required\n');
+    console.error('[ERROR] Error: URL is required\n');
     showHelp();
     process.exit(1);
   }
@@ -199,13 +194,7 @@ async function main() {
   // Use default languages if none specified
   if (options.languages.length === 0) {
     options.languages = ['es', 'fr'];
-    console.log(`ℹ️  No languages specified, using defaults: ${options.languages.join(', ')}\n`);
-  }
-
-  // Validate languages
-  const invalidLangs = options.languages.filter(l => !SUPPORTED_LANGUAGES.includes(l));
-  if (invalidLangs.length > 0) {
-    console.warn(`⚠️  Warning: Unsupported languages will be attempted anyway: ${invalidLangs.join(', ')}\n`);
+    console.log(`[INFO] No languages specified, using defaults: ${options.languages.join(', ')}\n`);
   }
 
   try {

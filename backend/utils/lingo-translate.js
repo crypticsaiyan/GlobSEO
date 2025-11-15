@@ -21,43 +21,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Configuration
-const FRONTEND_DIR = path.resolve(__dirname, '../frontend');
+const FRONTEND_DIR = path.resolve(__dirname, '../../frontend');
 const I18N_DIR = path.join(FRONTEND_DIR, 'i18n');
 
-/**
- * Initialize Lingo.dev CLI in the frontend directory
- * @param {string} sourceLang - Source language code
- * @param {Array<string>} targetLangs - Target language codes
- */
-function initializeLingoConfig(sourceLang = 'en', targetLangs = ['es', 'fr']) {
-  const i18nConfigPath = path.join(FRONTEND_DIR, 'i18n.json');
-  
-  // Create i18n.json if it doesn't exist
-  if (!fs.existsSync(i18nConfigPath)) {
-    const config = {
-      "$schema": "https://lingo.dev/schema/i18n.json",
-      "version": "1.10",
-      "locale": {
-        "source": sourceLang,
-        "targets": targetLangs
-      },
-      "buckets": {
-        "json": {
-          "include": ["i18n/[locale].json"]
-        }
-      }
-    };
-    
-    fs.writeFileSync(i18nConfigPath, JSON.stringify(config, null, 2));
-    console.log(`✅ Created i18n.json configuration`);
-  }
-  
-  // Ensure i18n directory exists
-  if (!fs.existsSync(I18N_DIR)) {
-    fs.mkdirSync(I18N_DIR, { recursive: true });
-    console.log(`✅ Created i18n directory`);
-  }
-}
 
 /**
  * Setup i18n.json configuration for Lingo.dev CLI
@@ -68,13 +34,12 @@ function setupI18nConfig(sourceLang, targetLangs) {
   const i18nConfigPath = path.join(FRONTEND_DIR, 'i18n.json');
   
   // ALWAYS create fresh config with ONLY the requested languages
-  // This prevents Lingo from translating all languages in the config
   const config = {
     "$schema": "https://lingo.dev/schema/i18n.json",
     "version": "1.10",
     "locale": {
       "source": sourceLang,
-      "targets": targetLangs  // ONLY the languages requested by the user
+      "targets": targetLangs  
     },
     "buckets": {
       "json": {
@@ -85,7 +50,7 @@ function setupI18nConfig(sourceLang, targetLangs) {
   
   // Write the config (overwrites existing)
   fs.writeFileSync(i18nConfigPath, JSON.stringify(config, null, 2));
-  console.log(`📝 Updated i18n.json with targets: ${targetLangs.join(', ')}`);
+  console.log(`[NOTE] Updated i18n.json with targets: ${targetLangs.join(', ')}`);
   
   return config;
 }
@@ -120,7 +85,7 @@ async function translateWithLingo(content, sourceLang, targetLang) {
     }
     fs.writeFileSync(sourceFile, JSON.stringify(mergedContent, null, 2));
     
-    console.log(`🔄 Translating from ${sourceLang} to ${targetLang}...`);
+    console.log(`Translating from ${sourceLang} to ${targetLang}...`);
     
     // Setup i18n.json config
     setupI18nConfig(sourceLang, [targetLang]);
@@ -142,11 +107,11 @@ async function translateWithLingo(content, sourceLang, targetLang) {
         throw new Error('Translation output file not found');
       }
     } catch (execError) {
-      console.error(`❌ Lingo CLI command failed: ${execError.message}`);
+      console.error(`[ERROR] Lingo CLI command failed: ${execError.message}`);
       throw execError;
     }
   } catch (error) {
-    console.error(`❌ Translation failed: ${error.message}`);
+    console.error(`[ERROR] Translation failed: ${error.message}`);
     throw error;
   }
 }
@@ -166,7 +131,7 @@ async function processMetadataTranslations(metadata, targetLanguages) {
   const actualTargets = targetLanguages.filter(lang => lang !== sourceLang);
   
   if (actualTargets.length === 0) {
-    console.log('⏭️  No translations needed (all languages same as source)');
+    console.log('No translations needed (all languages same as source)');
     return translations;
   }
 
@@ -189,17 +154,40 @@ async function processMetadataTranslations(metadata, targetLanguages) {
     }
   };
 
+  // Include the source HOST (hostname only) in the translation content used for cache key
+  let sourceHost = '';
+  try {
+    const raw = metadata.url || metadata.canonical || metadata.domain || '';
+    if (raw) {
+      // If raw looks like a full URL, parse hostname; otherwise use raw as-is
+      try {
+        const parsed = new URL(raw);
+        sourceHost = parsed.hostname;
+      } catch (e) {
+        // Not a full URL, assume it's already a hostname/path; strip path if present
+        sourceHost = raw.split('/')[0] || raw;
+      }
+    }
+  } catch (e) {
+    sourceHost = '';
+  }
+
+  if (!sourceHost) {
+    sourceHost = 'unknown-host';
+  }
+
+  translationContent._sourceHost = sourceHost;
+
   // OPTIMIZATION 1: Check cache first
   const cacheKey = getCacheKey(translationContent, sourceLang, actualTargets);
   const cachedTranslations = getCachedTranslation(cacheKey);
   
   if (cachedTranslations) {
-    console.log('🚀 Using cached translations - NO API calls needed!');
+    console.log('* Using cached translations - NO API calls needed!');
     return cachedTranslations;
   }
 
   // OPTIMIZATION 2: Check for partial translations (incremental)
-  let partialCacheKey = null;
   let existingTranslations = {};
   
   // Try to find partial cache matches (same content, subset of languages)
@@ -209,7 +197,7 @@ async function processMetadataTranslations(metadata, targetLanguages) {
     
     if (subsetCache) {
       existingTranslations = mergeTranslations(existingTranslations, subsetCache);
-      console.log(`📦 Found partial cache for: ${subset.join(', ')}`);
+      console.log(`* Found partial cache for: ${subset.join(', ')}`);
     }
   }
 
@@ -217,16 +205,16 @@ async function processMetadataTranslations(metadata, targetLanguages) {
   const missingLanguages = getMissingLanguages(existingTranslations, actualTargets);
   
   if (missingLanguages.length === 0) {
-    console.log('✅ All languages found in cache!');
+    console.log('** All languages found in cache!');
     setCachedTranslation(cacheKey, existingTranslations, actualTargets);
     return existingTranslations;
   }
 
-  console.log(`🔄 Need to translate ${missingLanguages.length}/${actualTargets.length} languages: ${missingLanguages.join(', ')}`);
+  console.log(`Need to translate ${missingLanguages.length}/${actualTargets.length} languages: ${missingLanguages.join(', ')}`);
 
   try {
     // Setup i18n.json config with ONLY missing languages
-    console.log(`🔧 Setting up Lingo.dev config for languages: ${missingLanguages.join(', ')}`);
+    console.log(`Setting up Lingo.dev config for languages: ${missingLanguages.join(', ')}`);
     setupI18nConfig(sourceLang, missingLanguages);
 
     // Write source file ONCE
@@ -246,10 +234,10 @@ async function processMetadataTranslations(metadata, targetLanguages) {
     };
     
     fs.writeFileSync(sourceFile, JSON.stringify(mergedContent, null, 2));
-    console.log(`📝 Wrote source content to ${sourceLang}.json`);
+    console.log(`Wrote source content to ${sourceLang}.json`);
 
     // Run Lingo.dev CLI ONCE for all missing languages
-    console.log(`🔄 Running Lingo.dev translation (this runs ONCE for ${missingLanguages.length} languages)...`);
+    console.log(`Running Lingo.dev translation (this runs ONCE for ${missingLanguages.length} languages)...`);
     
     try {
       execSync('npx lingo.dev@latest run', {
@@ -271,9 +259,9 @@ async function processMetadataTranslations(metadata, targetLanguages) {
       if (fs.existsSync(targetFile)) {
         const translated = JSON.parse(fs.readFileSync(targetFile, 'utf8'));
         newTranslations[targetLang] = translated;
-        console.log(`✅ Translation to ${targetLang} completed`);
+        console.log(`Translation to ${targetLang} completed`);
       } else {
-        console.warn(`⚠️  Translation file for ${targetLang} not found`);
+        console.warn(`Translation file for ${targetLang} not found`);
         newTranslations[targetLang] = {
           ...translationContent,
           _error: `Translation file not generated`
@@ -287,12 +275,12 @@ async function processMetadataTranslations(metadata, targetLanguages) {
     // OPTIMIZATION 3: Cache the complete result
     setCachedTranslation(cacheKey, allTranslations, actualTargets);
 
-    console.log(`✅ All translations complete (${missingLanguages.length} new, ${Object.keys(existingTranslations).length} cached)`);
+    console.log(`[*] All translations complete (${missingLanguages.length} new, ${Object.keys(existingTranslations).length} cached)`);
     
     return allTranslations;
     
   } catch (error) {
-    console.error(`❌ Translation process failed: ${error.message}`);
+    console.error(`[ERROR] Translation process failed: ${error.message}`);
     // Return empty translations on error
     const errorTranslations = {};
     for (const targetLang of actualTargets) {
@@ -354,7 +342,7 @@ function updateI18nFiles(translations) {
     };
 
     fs.writeFileSync(i18nFile, JSON.stringify(updatedContent, null, 2));
-    console.log(`💾 Updated ${lang}.json`);
+    console.log(`[SAVE] Updated ${lang}.json`);
   }
 }
 
@@ -374,14 +362,14 @@ async function main() {
   const targetLanguages = args.slice(1).length > 0 ? args.slice(1) : ['es', 'fr'];
 
   if (!fs.existsSync(metadataFile)) {
-    console.error(`❌ File not found: ${metadataFile}`);
+    console.error(`[ERROR] File not found: ${metadataFile}`);
     process.exit(1);
   }
 
   try {
     // Read metadata
     const metadata = JSON.parse(fs.readFileSync(metadataFile, 'utf8'));
-    console.log(`📖 Loaded metadata from ${metadataFile}`);
+    console.log(`* Loaded metadata from ${metadataFile}`);
 
     // Process translations
     const translations = await processMetadataTranslations(
@@ -401,10 +389,10 @@ async function main() {
     }, null, 2));
 
     console.log(`\n✨ Translation complete!`);
-    console.log(`📊 Results saved to: ${outputFile}`);
-    console.log(`🌍 Updated languages: ${targetLanguages.join(', ')}`);
+    console.log(`[*] Results saved to: ${outputFile}`);
+    console.log(`[*] Updated languages: ${targetLanguages.join(', ')}`);
   } catch (error) {
-    console.error(`❌ Error: ${error.message}`);
+    console.error(`[ERROR] Error: ${error.message}`);
     console.error(error.stack);
     process.exit(1);
   }

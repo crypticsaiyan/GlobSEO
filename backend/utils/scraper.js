@@ -110,14 +110,14 @@ export async function scrapeMetadata(url, options = {}) {
 export async function scrapeAndScore(url, options = {}) {
   const { primaryKeyword = '' } = options;
   
-  console.log(`🔍 Scraping: ${url}`);
+  console.log(`* Scraping: ${url}`);
   
   // Step 1: Scrape metadata (with content)
   const metadata = await scrapeMetadata(url, { includeContent: true });
-  console.log('✅ Metadata scraped');
+  console.log('[*] Metadata scraped');
   
   // Step 2: Generate SEO score
-  console.log('📊 Generating SEO score...');
+  console.log('* Generating SEO score...');
   const seoScoreResult = await generateSEOScore({
     url: metadata.url,
     title: metadata.title,
@@ -136,7 +136,7 @@ export async function scrapeAndScore(url, options = {}) {
   });
   
   if (seoScoreResult.success) {
-    console.log(`✅ SEO Score: ${seoScoreResult.analysis.total_score}/100`);
+    console.log(`[*] SEO Score: ${seoScoreResult.analysis.total_score}/100`);
   }
   
   return {
@@ -189,7 +189,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         
         console.log('');
         console.log('═'.repeat(60));
-        console.log('📊 SEO QUALITY SCORE REPORT');
+        console.log('[*] SEO QUALITY SCORE REPORT');
         console.log('═'.repeat(60));
         console.log('');
         console.log(`URL: ${result.metadata.url}`);
@@ -204,7 +204,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         console.log(`  Content Alignment:    ${result.seoScore.scores.content_alignment}/20 ${'█'.repeat(result.seoScore.scores.content_alignment)}`);
         console.log(`  Technical SEO:        ${result.seoScore.scores.technical_seo}/20 ${'█'.repeat(result.seoScore.scores.technical_seo)}`);
         console.log('─'.repeat(60));
-        console.log(`  🎯 TOTAL SCORE:        ${result.seoScore.total_score}/100`);
+        console.log(`  [*] TOTAL SCORE:        ${result.seoScore.total_score}/100`);
         
         // Grade
         let grade, emoji;
@@ -241,14 +241,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         }
         
         console.log('═'.repeat(60));
-        console.log(`⏱️  Completed in ${duration}s`);
+        console.log(`[TIME] Completed in ${duration}s`);
         console.log('');
         console.log('Full JSON output:');
         console.log(JSON.stringify(result, null, 2));
       })
       .catch(error => {
         console.error('');
-        console.error('❌ Error:', error.message);
+        console.error('[ERROR] Error:', error.message);
         console.error('');
         process.exit(1);
       });
@@ -258,14 +258,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       .then(metadata => {
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
         console.log('');
-        console.log('✅ Metadata scraped successfully');
-        console.log(`⏱️  Completed in ${duration}s`);
+        console.log('[OK] Metadata scraped successfully');
+        console.log(`[TIME] Completed in ${duration}s`);
         console.log('');
         console.log(JSON.stringify(metadata, null, 2));
       })
       .catch(error => {
         console.error('');
-        console.error('❌ Error:', error.message);
+        console.error('[ERROR] Error:', error.message);
         console.error('');
         process.exit(1);
       });

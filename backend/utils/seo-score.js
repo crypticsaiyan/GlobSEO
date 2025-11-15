@@ -171,14 +171,14 @@ IMPORTANT FOR SMART REWRITES:
       }
     });
 
-    console.log('🤖 Analyzing SEO quality with Gemini AI...');
+    console.log('* Analyzing SEO quality with Gemini AI...');
 
     // Generate content
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
 
-    console.log('✅ SEO analysis complete');
+    console.log('[*] SEO analysis complete');
 
     // Parse JSON response
     // Remove markdown code blocks if present
@@ -200,7 +200,7 @@ IMPORTANT FOR SMART REWRITES:
       success: true,
       analysis,
       metadata: {
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.0-flash',
         timestamp: new Date().toISOString(),
         url
       }
@@ -332,10 +332,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     primaryKeyword: 'example domain'
   };
 
-  console.log('🧪 Testing SEO Score Generator...\n');
+  console.log('[TEST] Testing SEO Score Generator...\n');
   
   const result = await generateSEOScore(testData);
-  console.log('\n📊 SEO Quality Score Results:');
+  console.log('\n[*] SEO Quality Score Results:');
   console.log(JSON.stringify(result, null, 2));
 }
 

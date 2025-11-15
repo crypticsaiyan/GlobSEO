@@ -7,11 +7,11 @@
 
 import express from 'express';
 import cors from 'cors';
-import { scrapeMetadata } from './scraper.js';
-import { processMetadataTranslations } from './lingo-translate.js';
-import { generateSEOScore } from './seo-score.js';
-import { getCacheStats, clearCache } from './cache-utils.js';
-import { rateLimiter, strictRateLimiter } from './rate-limiter.js';
+import { scrapeMetadata } from './utils/scraper.js';
+import { processMetadataTranslations } from './utils/lingo-translate.js';
+import { generateSEOScore } from './utils/seo-score.js';
+import { getCacheStats, clearCache } from './utils/cache-utils.js';
+import { rateLimiter, strictRateLimiter } from './utils/rate-limiter.js';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -62,7 +62,7 @@ app.post('/api/scrape', async (req, res) => {
       });
     }
 
-    console.log(`📍 Scraping: ${url}`);
+    console.log(`* Scraping: ${url}`);
 
     const metadata = await scrapeMetadata(url);
 
@@ -109,20 +109,20 @@ app.post('/api/translate', strictRateLimiter, async (req, res) => {
     }
 
     console.log(`🔍 Scraping and translating: ${url}`);
-    console.log(`🌍 Target languages: ${languages.join(', ')}`);
-    console.log(`⏱️  Request started at: ${new Date().toISOString()}`);
+    console.log(`[WORLD] Target languages: ${languages.join(', ')}`);
+    console.log(`[TIME] Request started at: ${new Date().toISOString()}`);
 
     // Step 1: Scrape metadata
-    console.log('📥 Step 1: Scraping metadata...');
+    console.log('[DOWNLOAD] Step 1: Scraping metadata...');
     const metadata = await scrapeMetadata(url);
-    console.log('✅ Metadata scraped successfully');
+    console.log('[OK] Metadata scraped successfully');
 
     // Step 2: Translate metadata
-    console.log('🔄 Step 2: Starting translations...');
+    console.log('[SYNC] Step 2: Starting translations...');
     const startTime = Date.now();
     const translations = await processMetadataTranslations(metadata, languages);
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-    console.log(`✅ All translations complete in ${duration}s`);
+    console.log(`[OK] All translations complete in ${duration}s`);
 
     // Step 3: Save results
     const result = {
@@ -143,7 +143,7 @@ app.post('/api/translate', strictRateLimiter, async (req, res) => {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const outputFile = path.join(outputDir, `metadata-${timestamp}.json`);
     fs.writeFileSync(outputFile, JSON.stringify(result, null, 2));
-    console.log(`💾 Saved to: ${outputFile}`);
+    console.log(`[SAVE] Saved to: ${outputFile}`);
 
     res.json(result);
 
@@ -194,7 +194,7 @@ app.post('/api/seo-score', async (req, res) => {
       });
     }
 
-    console.log(`📊 Generating SEO score for: ${url}`);
+    console.log(`[CHART] Generating SEO score for: ${url}`);
 
     const result = await generateSEOScore({
       url,
@@ -244,12 +244,12 @@ app.post('/api/scrape-and-score', async (req, res) => {
     console.log(`🔍 Scraping and scoring: ${url}`);
 
     // Step 1: Scrape metadata
-    console.log('📥 Step 1: Scraping metadata...');
+    console.log('[DOWNLOAD] Step 1: Scraping metadata...');
     const metadata = await scrapeMetadata(url);
-    console.log('✅ Metadata scraped successfully');
+    console.log('[OK] Metadata scraped successfully');
 
     // Step 2: Generate SEO score
-    console.log('📊 Step 2: Generating SEO score...');
+    console.log('[CHART] Step 2: Generating SEO score...');
     const seoScore = await generateSEOScore({
       url,
       title: metadata.title,
@@ -266,7 +266,7 @@ app.post('/api/scrape-and-score', async (req, res) => {
       language: metadata.language || 'en',
       primaryKeyword
     });
-    console.log('✅ SEO score generated successfully');
+    console.log('[OK] SEO score generated successfully');
 
     const result = {
       success: true,
@@ -318,23 +318,23 @@ app.post('/api/scrape-translate-score', strictRateLimiter, async (req, res) => {
       });
     }
 
-    console.log(`🔍 Complete pipeline for: ${url}`);
-    console.log(`🌍 Target languages: ${languages.join(', ')}`);
+    console.log(`[SEARCH] Complete pipeline for: ${url}`);
+    console.log(`[WORLD] Target languages: ${languages.join(', ')}`);
 
     // Step 1: Scrape metadata
-    console.log('📥 Step 1: Scraping metadata...');
+    console.log('[DOWNLOAD] Step 1: Scraping metadata...');
     const metadata = await scrapeMetadata(url);
-    console.log('✅ Metadata scraped successfully');
+    console.log('[OK] Metadata scraped successfully');
 
     // Step 2: Translate ONLY metadata fields (not content)
-    console.log('🔄 Step 2: Translating metadata fields (excluding content)...');
+    console.log('[SYNC] Step 2: Translating metadata fields (excluding content)...');
     const startTime = Date.now();
     const translations = await processMetadataTranslations(metadata, languages);
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-    console.log(`✅ Metadata translations complete in ${duration}s`);
+    console.log(`[OK] Metadata translations complete in ${duration}s`);
 
     // Step 3: Generate SEO score for original
-    console.log('📊 Step 3: Generating SEO score...');
+    console.log('[CHART] Step 3: Generating SEO score...');
     const seoScore = await generateSEOScore({
       url,
       title: metadata.title,
@@ -446,13 +446,13 @@ app.listen(PORT, () => {
   console.log('');
   console.log('╔════════════════════════════════════════════════════════╗');
   console.log('║                                                        ║');
-  console.log('║          🌍 GlobSEO Backend API Server                ║');
+  console.log('║               GlobSEO Backend API Server               ║');
   console.log('║                                                        ║');
   console.log('╚════════════════════════════════════════════════════════╝');
   console.log('');
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`[OK] Server running on http://localhost:${PORT}`);
   console.log('');
-  console.log('📡 Available Endpoints:');
+  console.log('[ANTENNA] Available Endpoints:');
   console.log(`   GET  http://localhost:${PORT}/api/health`);
   console.log(`   GET  http://localhost:${PORT}/api/languages`);
   console.log(`   GET  http://localhost:${PORT}/api/cache/stats`);
