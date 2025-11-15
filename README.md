@@ -1,5 +1,7 @@
 # GlobSEO
 
+![GlobSEO](./assets/screenshots/hero.png)
+
 GlobSEO analyzes website metadata, translates it to multiple languages, and provides SEO scoring to help optimize content for global audiences.
 
 ## Features

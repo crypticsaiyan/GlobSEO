@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Header } from "./components/Header";
 import { HeroSection } from "./components/HeroSection";
 import { InputPanel } from "./components/InputPanel";
@@ -94,9 +94,27 @@ export default function App() {
   const [translations, setTranslations] = useState<TranslationResult>({});
   const [error, setError] = useState<string | null>(null);
   const [processingStep, setProcessingStep] = useState<string>("");
+  const [apiKeysConfigured, setApiKeysConfigured] = useState({ gemini: false, lingo: false });
+
+  // Check API key configuration on mount
+  useEffect(() => {
+    const checkApiKeys = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api'}/health`);
+        if (response.ok) {
+          const data = await response.json();
+          setApiKeysConfigured(data.apiKeys || { gemini: false, lingo: false });
+        }
+      } catch (error) {
+        console.warn('Failed to check API key configuration:', error);
+      }
+    };
+    
+    checkApiKeys();
+  }, []);
 
   // Core generate function (not throttled directly)
-  const performGenerate = useCallback(async (url: string, primaryKeyword?: string) => {
+  const performGenerate = useCallback(async (url: string, primaryKeyword?: string, lingoApiKey?: string, geminiApiKey?: string) => {
     setIsGenerating(true);
     setError(null);
     setShowResults(false);
@@ -120,7 +138,9 @@ export default function App() {
         const result = await api.scrapeTranslateScore(
           url,
           targetLanguageCodes,
-          primaryKeyword
+          primaryKeyword,
+          lingoApiKey,
+          geminiApiKey
         );
         
         setProcessingStep("Finalizing...");
@@ -135,7 +155,7 @@ export default function App() {
         
         setTimeout(() => setProcessingStep("Analyzing SEO..."), 1000);
         
-        const result = await api.scrapeAndScore(url, primaryKeyword);
+        const result = await api.scrapeAndScore(url, primaryKeyword, geminiApiKey);
         setMetadata(result.metadata);
         setSeoScore(result.seoScore);
         setTranslations({});
@@ -186,6 +206,8 @@ export default function App() {
                   processingStep={processingStep}
                   selectedLanguages={selectedLanguages}
                   setSelectedLanguages={setSelectedLanguages}
+                  onApiKeyChange={() => setError(null)}
+                  apiKeysConfigured={apiKeysConfigured}
                 />
               </div>
 

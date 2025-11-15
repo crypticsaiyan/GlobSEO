@@ -1,17 +1,19 @@
 {
   "greeting": "Ciao da Lingo.dev",
   "meta": {
-    "title": "Lingo.dev - Localizzazione AI automatizzata per app web e mobile",
-    "description": "Localizzazione AI all'avanguardia per app, direttamente nel CI/CD. Distribuisci più velocemente, rilascia più spesso e ottieni più clienti paganti.",
+    "title": "Dominio di esempio",
+    "description": "",
     "keywords": "",
     "h1": "Costruisci. Commit. Traduci."
   },
   "og": {
-    "title": "Lingo.dev - Localizzazione AI automatizzata per app web e mobile",
-    "description": "Localizzazione AI all'avanguardia per app, direttamente nel CI/CD. Distribuisci più velocemente, rilascia più spesso e ottieni più clienti paganti."
+    "title": "Dominio di esempio",
+    "description": ""
   },
   "twitter": {
-    "title": "Lingo.dev - Localizzazione AI automatizzata per app web e mobile",
-    "description": "Localizzazione AI all'avanguardia per app, direttamente nel CI/CD. Distribuisci più velocemente, rilascia più spesso e ottieni più clienti paganti."
-  }
+    "title": "Dominio di esempio",
+    "description": ""
+  },
+  "_sourceUrl": "https://crypticsaiyan.github.io",
+  "_sourceHost": "example.com"
 }

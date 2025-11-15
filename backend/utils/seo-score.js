@@ -11,9 +11,6 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-
 /**
  * Generate SEO quality score using Gemini AI
  * @param {Object} params - SEO analysis parameters
@@ -25,6 +22,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
  * @param {string} params.content - Page content (extracted)
  * @param {string} params.language - Primary language
  * @param {string} [params.primaryKeyword] - Primary keyword (optional)
+ * @param {string} [params.geminiApiKey] - Gemini API key (optional, falls back to env)
  * @returns {Promise<Object>} SEO score analysis
  */
 export async function generateSEOScore({
@@ -35,13 +33,20 @@ export async function generateSEOScore({
   ogTags = {},
   content,
   language,
-  primaryKeyword = ''
+  primaryKeyword = '',
+  geminiApiKey
 }) {
   try {
+    // Use provided API key or fall back to environment variable
+    const apiKey = geminiApiKey || process.env.GEMINI_API_KEY;
+
     // Validate API key
-    if (!process.env.GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY environment variable is not set');
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY is required. Please provide it in the request or set the environment variable.');
     }
+
+    // Initialize Gemini AI with the API key
+    const genAI = new GoogleGenerativeAI(apiKey);
 
     // Prepare the prompt with user's exact specifications
     const prompt = `You are an expert SEO auditor with 10+ years of experience in search optimization,
@@ -208,6 +213,19 @@ IMPORTANT FOR SMART REWRITES:
 
   } catch (error) {
     console.error('SEO Score Generation Error:', error);
+    
+    // Provide specific error messages for API key and authentication issues
+    if (error.message?.includes('API_KEY') || error.message?.includes('unauthorized') || error.message?.includes('invalid') || error.message?.includes('authentication')) {
+      throw new Error('Invalid Gemini API key. Please check your API key and try again.');
+    }
+    
+    if (error.message?.includes('quota') || error.message?.includes('billing') || error.message?.includes('exceeded')) {
+      throw new Error('Gemini API quota exceeded or billing issue. Please check your Google Cloud billing account.');
+    }
+    
+    if (error.message?.includes('network') || error.message?.includes('timeout') || error.message?.includes('ECONNREFUSED')) {
+      throw new Error('Network error while connecting to Gemini API. Please try again later.');
+    }
     
     // Return a fallback response if AI fails
     if (error.message.includes('GEMINI_API_KEY')) {

@@ -62,7 +62,7 @@ function setupI18nConfig(sourceLang, targetLangs) {
  * @param {string} targetLang - Target language code
  * @returns {Promise<Object>} - Translated content
  */
-async function translateWithLingo(content, sourceLang, targetLang) {
+async function translateWithLingo(content, sourceLang, targetLang, lingoApiKey) {
   try {
     // Ensure source locale file exists with content
     const sourceFile = path.join(I18N_DIR, `${sourceLang}.json`);
@@ -95,7 +95,10 @@ async function translateWithLingo(content, sourceLang, targetLang) {
       execSync('npx lingo.dev@latest run', { 
         stdio: 'inherit',
         cwd: FRONTEND_DIR,
-        env: { ...process.env }
+        env: { 
+          ...process.env, 
+          LINGODOTDEV_API_KEY: lingoApiKey || process.env.LINGODOTDEV_API_KEY 
+        }
       });
 
       // Read translated content
@@ -108,6 +111,13 @@ async function translateWithLingo(content, sourceLang, targetLang) {
       }
     } catch (execError) {
       console.error(`[ERROR] Lingo CLI command failed: ${execError.message}`);
+      
+      // Check if this is an authentication error
+      const fullError = `${execError.message} ${execError.stderr || ''}`;
+      if (fullError.includes('Authentication failed') || fullError.includes('unauthorized')) {
+        throw new Error('Invalid Lingo.dev API key. Please check your API key and try again.');
+      }
+      
       throw execError;
     }
   } catch (error) {
@@ -123,7 +133,7 @@ async function translateWithLingo(content, sourceLang, targetLang) {
  * @param {Array<string>} targetLanguages - Target languages
  * @returns {Promise<Object>} - Translations object
  */
-async function processMetadataTranslations(metadata, targetLanguages) {
+async function processMetadataTranslations(metadata, targetLanguages, lingoApiKey) {
   const translations = {};
   const sourceLang = metadata.lang || 'en';
 
@@ -243,11 +253,21 @@ async function processMetadataTranslations(metadata, targetLanguages) {
       execSync('npx lingo.dev@latest run', {
         cwd: FRONTEND_DIR,
         stdio: 'inherit', // Show output in real-time
-        env: { ...process.env }
+        env: { 
+          ...process.env, 
+          LINGODOTDEV_API_KEY: lingoApiKey || process.env.LINGODOTDEV_API_KEY 
+        }
       });
       
     } catch (execError) {
       console.error(`❌ Lingo CLI execution failed: ${execError.message}`);
+      
+      // Check if this is an authentication error
+      const fullError = `${execError.message} ${execError.stderr || ''}`;
+      if (fullError.includes('Authentication failed') || fullError.includes('unauthorized')) {
+        throw new Error('Invalid Lingo.dev API key. Please check your API key and try again.');
+      }
+      
       throw execError;
     }
 
@@ -281,12 +301,35 @@ async function processMetadataTranslations(metadata, targetLanguages) {
     
   } catch (error) {
     console.error(`[ERROR] Translation process failed: ${error.message}`);
+    
+    // Check both the main error message and stderr for authentication issues
+    const fullError = `${error.message} ${error.stderr || ''} ${error.stdout || ''}`;
+    
+    // Provide specific error messages for API key issues
+    let errorMessage = error.message;
+    if (fullError.includes('Authentication failed') || 
+        fullError.includes('unauthorized') || 
+        fullError.includes('invalid') || 
+        fullError.includes('authentication') || 
+        fullError.includes('API key') ||
+        fullError.includes('Command failed')) {
+      errorMessage = 'Invalid Lingo.dev API key. Please check your API key and try again.';
+      throw new Error(errorMessage);
+    } else if (error.message?.includes('quota') || error.message?.includes('limit') || error.message?.includes('rate')) {
+      errorMessage = 'Lingo.dev API quota exceeded. Please check your account limits.';
+      throw new Error(errorMessage);
+    } else if (error.message?.includes('network') || error.message?.includes('timeout') || error.message?.includes('ECONNREFUSED')) {
+      errorMessage = 'Network error while connecting to Lingo.dev. Please try again later.';
+      throw new Error(errorMessage);
+    }
+    
+    // For other errors, return error translations but don't throw
     // Return empty translations on error
     const errorTranslations = {};
     for (const targetLang of actualTargets) {
       errorTranslations[targetLang] = existingTranslations[targetLang] || {
         ...translationContent,
-        _error: `Translation failed: ${error.message}`
+        _error: `Translation failed: ${errorMessage}`
       };
     }
     return errorTranslations;

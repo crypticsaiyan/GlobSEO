@@ -1,17 +1,19 @@
 {
-  "greeting": "Hello from Lingo.dev",
+  "greeting": "Dia duit ó Lingo.dev",
   "meta": {
-    "title": "Lingo.dev - Logánú uathoibrithe AI d'aipeanna gréasáin & móibíleacha",
-    "description": "Logánú AI den scoth d'aipeanna, díreach i do CI/CD. Seol níos tapúla, eisiúint níos minice, agus bíodh níos mó custaiméirí íoctha agat.",
+    "title": "Nóiméad amháin...",
+    "description": "",
     "keywords": "",
-    "h1": "Tóg. Tiomáin. Aistrigh."
+    "h1": ""
   },
   "og": {
-    "title": "Lingo.dev - Logánú uathoibrithe AI d'aipeanna gréasáin & móibíleacha",
-    "description": "Logánú AI den scoth d'aipeanna, díreach i do CI/CD. Seol níos tapúla, eisiúint níos minice, agus bíodh níos mó custaiméirí íoctha agat."
+    "title": "Nóiméad amháin...",
+    "description": ""
   },
   "twitter": {
-    "title": "Lingo.dev - Logánú uathoibrithe AI d'aipeanna gréasáin & móibíleacha",
-    "description": "Logánú AI den scoth d'aipeanna, díreach i do CI/CD. Seol níos tapúla, eisiúint níos minice, agus bíodh níos mó custaiméirí íoctha agat."
-  }
+    "title": "Nóiméad amháin...",
+    "description": ""
+  },
+  "_sourceUrl": "https://crypticsaiyan.github.io",
+  "_sourceHost": "canva.com"
 }

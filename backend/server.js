@@ -41,7 +41,14 @@ app.use((req, res, next) => {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'GlobSEO API is running' });
+  res.json({ 
+    status: 'ok', 
+    message: 'GlobSEO API is running',
+    apiKeys: {
+      gemini: !!process.env.GEMINI_API_KEY,
+      lingo: !!process.env.LINGODOTDEV_API_KEY
+    }
+  });
 });
 
 /**
@@ -87,12 +94,12 @@ app.post('/api/scrape', async (req, res) => {
  * POST /api/translate
  * Scrape and translate metadata
  * 
- * Body: { url: string, languages: string[] }
+ * Body: { url: string, languages: string[], lingoApiKey?: string }
  * Returns: { original: Object, translations: Object }
  */
 app.post('/api/translate', strictRateLimiter, async (req, res) => {
   try {
-    const { url, languages = ['es', 'fr'] } = req.body;
+    const { url, languages = ['es', 'fr'], lingoApiKey } = req.body;
 
     if (!url) {
       return res.status(400).json({ 
@@ -120,7 +127,7 @@ app.post('/api/translate', strictRateLimiter, async (req, res) => {
     // Step 2: Translate metadata
     console.log('[SYNC] Step 2: Starting translations...');
     const startTime = Date.now();
-    const translations = await processMetadataTranslations(metadata, languages);
+    const translations = await processMetadataTranslations(metadata, languages, lingoApiKey);
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log(`[OK] All translations complete in ${duration}s`);
 
@@ -226,13 +233,14 @@ app.post('/api/seo-score', async (req, res) => {
  * 
  * Body: { 
  *   url: string,
- *   primaryKeyword?: string
+ *   primaryKeyword?: string,
+ *   geminiApiKey?: string
  * }
  * Returns: { success: boolean, metadata: Object, seoScore: Object }
  */
 app.post('/api/scrape-and-score', async (req, res) => {
   try {
-    const { url, primaryKeyword } = req.body;
+    const { url, primaryKeyword, geminiApiKey } = req.body;
 
     if (!url) {
       return res.status(400).json({ 
@@ -264,7 +272,8 @@ app.post('/api/scrape-and-score', async (req, res) => {
       },
       content: metadata.content,
       language: metadata.language || 'en',
-      primaryKeyword
+      primaryKeyword,
+      geminiApiKey
     });
     console.log('[OK] SEO score generated successfully');
 
@@ -296,13 +305,15 @@ app.post('/api/scrape-and-score', async (req, res) => {
  * Body: { 
  *   url: string,
  *   languages: string[] (language codes like ['es', 'fr']),
- *   primaryKeyword?: string
+ *   primaryKeyword?: string,
+ *   lingoApiKey?: string,
+ *   geminiApiKey?: string
  * }
  * Returns: { success: boolean, metadata: Object, translations: Object, seoScore: Object }
  */
 app.post('/api/scrape-translate-score', strictRateLimiter, async (req, res) => {
   try {
-    const { url, languages = [], primaryKeyword } = req.body;
+    const { url, languages = [], primaryKeyword, lingoApiKey, geminiApiKey } = req.body;
 
     if (!url) {
       return res.status(400).json({ 
@@ -329,7 +340,7 @@ app.post('/api/scrape-translate-score', strictRateLimiter, async (req, res) => {
     // Step 2: Translate ONLY metadata fields (not content)
     console.log('[SYNC] Step 2: Translating metadata fields (excluding content)...');
     const startTime = Date.now();
-    const translations = await processMetadataTranslations(metadata, languages);
+    const translations = await processMetadataTranslations(metadata, languages, lingoApiKey);
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log(`[OK] Metadata translations complete in ${duration}s`);
 
@@ -349,7 +360,8 @@ app.post('/api/scrape-translate-score', strictRateLimiter, async (req, res) => {
       },
       content: metadata.content,
       language: metadata.language || 'en',
-      primaryKeyword
+      primaryKeyword,
+      geminiApiKey
     });
     console.log('✅ SEO score generated successfully');
 

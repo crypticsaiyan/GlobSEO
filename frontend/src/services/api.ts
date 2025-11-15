@@ -114,11 +114,11 @@ class APIService {
   /**
    * Scrape and get SEO score in one call
    */
-  async scrapeAndScore(url: string, primaryKeyword?: string): Promise<ScrapeAndScoreResponse> {
+  async scrapeAndScore(url: string, primaryKeyword?: string, geminiApiKey?: string): Promise<ScrapeAndScoreResponse> {
     const response = await fetch(`${API_BASE_URL}/scrape-and-score`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, primaryKeyword })
+      body: JSON.stringify({ url, primaryKeyword, geminiApiKey })
     });
 
     if (!response.ok) {
@@ -135,12 +135,14 @@ class APIService {
   async scrapeTranslateScore(
     url: string, 
     languages: string[], 
-    primaryKeyword?: string
+    primaryKeyword?: string,
+    lingoApiKey?: string,
+    geminiApiKey?: string
   ): Promise<ScrapeTranslateScoreResponse> {
     const response = await fetch(`${API_BASE_URL}/scrape-translate-score`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, languages, primaryKeyword })
+      body: JSON.stringify({ url, languages, primaryKeyword, lingoApiKey, geminiApiKey })
     });
 
     if (!response.ok) {
@@ -181,11 +183,11 @@ class APIService {
   /**
    * Scrape and translate metadata
    */
-  async translate(url: string, languages: string[]): Promise<TranslateResponse> {
+  async translate(url: string, languages: string[], lingoApiKey?: string): Promise<TranslateResponse> {
     const response = await fetch(`${API_BASE_URL}/translate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, languages })
+      body: JSON.stringify({ url, languages, lingoApiKey })
     });
 
     if (!response.ok) {

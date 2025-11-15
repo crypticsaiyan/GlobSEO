@@ -1,15 +1,17 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { X, Link2, Search, Globe2, CheckCircle2 } from 'lucide-react';
 
 interface InputPanelProps {
-  onGenerate: (url: string, primaryKeyword?: string) => Promise<void>;
+  onGenerate: (url: string, primaryKeyword?: string, lingoApiKey?: string, geminiApiKey?: string) => Promise<void>;
   isGenerating: boolean;
   processingStep: string;
   selectedLanguages: string[];
   setSelectedLanguages: (languages: string[]) => void;
+  onApiKeyChange?: () => void;
+  apiKeysConfigured?: { gemini: boolean; lingo: boolean };
 }
 
 // Language categories for better organization
@@ -20,11 +22,36 @@ const languageCategories = {
   'African': ['Swahili', 'Afrikaans', 'Somali', 'Tigrinya', 'Kinyarwanda'],
 };
 
-export function InputPanel({ onGenerate, isGenerating, processingStep, selectedLanguages, setSelectedLanguages }: InputPanelProps) {
+export function InputPanel({ onGenerate, isGenerating, processingStep, selectedLanguages, setSelectedLanguages, onApiKeyChange, apiKeysConfigured }: InputPanelProps) {
   const [url, setUrl] = useState('');
   const [primaryKeyword, setPrimaryKeyword] = useState('');
+  const [lingoApiKey, setLingoApiKey] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('globseo-lingo-api-key') || '';
+    }
+    return '';
+  });
+  const [geminiApiKey, setGeminiApiKey] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('globseo-gemini-api-key') || '';
+    }
+    return '';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [showAllLanguages, setShowAllLanguages] = useState(false);
+
+  // Persist API keys to sessionStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('globseo-lingo-api-key', lingoApiKey);
+    }
+  }, [lingoApiKey]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('globseo-gemini-api-key', geminiApiKey);
+    }
+  }, [geminiApiKey]);
   
   // Get all available languages from categories
   const availableLanguages = useMemo(() => {
@@ -72,7 +99,12 @@ export function InputPanel({ onGenerate, isGenerating, processingStep, selectedL
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (url.trim()) {
-      await onGenerate(url.trim(), primaryKeyword.trim() || undefined);
+      await onGenerate(
+        url.trim(), 
+        primaryKeyword.trim() || undefined,
+        lingoApiKey.trim() || undefined,
+        geminiApiKey.trim() || undefined
+      );
     }
   };
 
@@ -114,6 +146,64 @@ export function InputPanel({ onGenerate, isGenerating, processingStep, selectedL
             className="bg-[#0a0a0a] border-white/10 focus:border-[#a3ff12]/50 focus:ring-[#a3ff12]/20 text-white placeholder:text-white/30 h-11 transition-all text-sm"
           />
         </div>
+
+        {/* API Keys Section - Only show if not configured */}
+        {(!apiKeysConfigured?.lingo || !apiKeysConfigured?.gemini) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {!apiKeysConfigured?.lingo && (
+              <div>
+                <label className="block text-white/50 mb-2.5 text-base">
+                  Lingo.dev API Key
+                </label>
+                <Input
+                  type="password"
+                  placeholder="Your Lingo.dev API key"
+                  value={lingoApiKey}
+                  onChange={(e) => {
+                    setLingoApiKey(e.target.value);
+                    onApiKeyChange?.();
+                  }}
+                  className="bg-[#0a0a0a] border-white/10 focus:border-[#a3ff12]/50 focus:ring-[#a3ff12]/20 text-white placeholder:text-white/30 h-11 transition-all text-sm"
+                />
+              </div>
+            )}
+
+            {!apiKeysConfigured?.gemini && (
+              <div>
+                <label className="block text-white/50 mb-2.5 text-base">
+                  Gemini API Key
+                </label>
+                <Input
+                  type="password"
+                  placeholder="Your Gemini API key"
+                  value={geminiApiKey}
+                  onChange={(e) => {
+                    setGeminiApiKey(e.target.value);
+                    onApiKeyChange?.();
+                  }}
+                  className="bg-[#0a0a0a] border-white/10 focus:border-[#a3ff12]/50 focus:ring-[#a3ff12]/20 text-white placeholder:text-white/30 h-11 transition-all text-sm"
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Show configured keys status */}
+        {(apiKeysConfigured?.lingo || apiKeysConfigured?.gemini) && (
+          <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-green-400 text-sm">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>
+                {apiKeysConfigured?.lingo && apiKeysConfigured?.gemini 
+                  ? "Both API keys are configured in the backend"
+                  : apiKeysConfigured?.lingo 
+                    ? "Lingo.dev API key is configured in the backend"
+                    : "Gemini API key is configured in the backend"
+                }
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Target Languages Section - Improved */}
         <div>
