@@ -1,0 +1,17 @@
+{
+  "greeting": "Hello from Lingo.dev",
+  "meta": {
+    "title": "Lingo.dev - Logánú uathoibrithe AI d'aipeanna gréasáin & móibíleacha",
+    "description": "Logánú AI den scoth d'aipeanna, díreach i do CI/CD. Seol níos tapúla, eisiúint níos minice, agus bíodh níos mó custaiméirí íoctha agat.",
+    "keywords": "",
+    "h1": "Tóg. Tiomáin. Aistrigh."
+  },
+  "og": {
+    "title": "Lingo.dev - Logánú uathoibrithe AI d'aipeanna gréasáin & móibíleacha",
+    "description": "Logánú AI den scoth d'aipeanna, díreach i do CI/CD. Seol níos tapúla, eisiúint níos minice, agus bíodh níos mó custaiméirí íoctha agat."
+  },
+  "twitter": {
+    "title": "Lingo.dev - Logánú uathoibrithe AI d'aipeanna gréasáin & móibíleacha",
+    "description": "Logánú AI den scoth d'aipeanna, díreach i do CI/CD. Seol níos tapúla, eisiúint níos minice, agus bíodh níos mó custaiméirí íoctha agat."
+  }
+}

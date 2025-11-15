@@ -5,7 +5,7 @@ export function FeaturesSection() {
     {
       icon: Globe,
       title: 'Global Reach',
-      description: 'Optimize your content for 100+ languages and reach audiences worldwide'
+      description: 'Optimize your content for 60+ languages and reach audiences worldwide'
     },
     {
       icon: Zap,

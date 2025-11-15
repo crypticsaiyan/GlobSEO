@@ -62,37 +62,30 @@ function initializeLingoConfig(sourceLang = 'en', targetLangs = ['es', 'fr']) {
 /**
  * Setup i18n.json configuration for Lingo.dev CLI
  * @param {string} sourceLang - Source language code
- * @param {Array<string>} targetLangs - Target language codes
+ * @param {Array<string>} targetLangs - Target language codes (ONLY these will be translated)
  */
 function setupI18nConfig(sourceLang, targetLangs) {
   const i18nConfigPath = path.join(FRONTEND_DIR, 'i18n.json');
   
-  // Check if i18n.json already exists
-  let config = {};
-  if (fs.existsSync(i18nConfigPath)) {
-    config = JSON.parse(fs.readFileSync(i18nConfigPath, 'utf8'));
-  } else {
-    // Create default config
-    config = {
-      "$schema": "https://lingo.dev/schema/i18n.json",
-      "version": "1.10",
-      "locale": {
-        "source": sourceLang,
-        "targets": targetLangs
-      },
-      "buckets": {
-        "json": {
-          "include": ["i18n/[locale].json"]
-        }
+  // ALWAYS create fresh config with ONLY the requested languages
+  // This prevents Lingo from translating all languages in the config
+  const config = {
+    "$schema": "https://lingo.dev/schema/i18n.json",
+    "version": "1.10",
+    "locale": {
+      "source": sourceLang,
+      "targets": targetLangs  // ONLY the languages requested by the user
+    },
+    "buckets": {
+      "json": {
+        "include": ["i18n/[locale].json"]
       }
-    };
-  }
+    }
+  };
   
-  // Update targets if needed
-  if (!config.locale.targets.every(t => targetLangs.includes(t))) {
-    config.locale.targets = [...new Set([...config.locale.targets, ...targetLangs])];
-    fs.writeFileSync(i18nConfigPath, JSON.stringify(config, null, 2));
-  }
+  // Write the config (overwrites existing)
+  fs.writeFileSync(i18nConfigPath, JSON.stringify(config, null, 2));
+  console.log(`📝 Updated i18n.json with targets: ${targetLangs.join(', ')}`);
   
   return config;
 }

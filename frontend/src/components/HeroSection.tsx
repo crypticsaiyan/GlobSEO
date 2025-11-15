@@ -39,7 +39,7 @@ export function HeroSection() {
             {/* Stats */}
             <div className="flex items-center gap-8 mt-12 justify-center lg:justify-start">
               <div>
-                <div className="text-2xl text-white/90">100+</div>
+                <div className="text-2xl text-white/90">60+</div>
                 <div className="text-sm text-white/40">Languages</div>
               </div>
               <div className="w-px h-12 bg-white/10"></div>

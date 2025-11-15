@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { X, Link2 } from 'lucide-react';
+import { X, Link2, Search, Globe2, CheckCircle2 } from 'lucide-react';
 
 interface InputPanelProps {
   onGenerate: (url: string, primaryKeyword?: string) => Promise<void>;
@@ -12,10 +12,28 @@ interface InputPanelProps {
   setSelectedLanguages: (languages: string[]) => void;
 }
 
+// Language categories for better organization
+const languageCategories = {
+  'Popular': ['English', 'Spanish', 'French', 'German', 'Japanese', 'Chinese', 'Portuguese', 'Italian', 'Russian', 'Arabic', 'Hindi', 'Korean'],
+  'European': ['Dutch', 'Polish', 'Swedish', 'Danish', 'Norwegian', 'Finnish', 'Czech', 'Romanian', 'Greek', 'Hungarian', 'Bulgarian', 'Croatian', 'Serbian', 'Ukrainian', 'Belarusian', 'Slovak', 'Slovenian', 'Estonian', 'Latvian', 'Lithuanian', 'Icelandic', 'Irish', 'Welsh', 'Basque', 'Catalan', 'Galician', 'Maltese', 'Albanian', 'Macedonian'],
+  'Asian': ['Vietnamese', 'Turkish', 'Thai', 'Indonesian', 'Malay', 'Urdu', 'Bengali', 'Punjabi', 'Tamil', 'Telugu', 'Malayalam', 'Khmer', 'Tagalog', 'Georgian', 'Armenian', 'Azerbaijani', 'Kazakh', 'Uzbek', 'Persian'],
+  'African': ['Swahili', 'Afrikaans', 'Somali', 'Tigrinya', 'Kinyarwanda'],
+};
+
 export function InputPanel({ onGenerate, isGenerating, processingStep, selectedLanguages, setSelectedLanguages }: InputPanelProps) {
   const [url, setUrl] = useState('');
   const [primaryKeyword, setPrimaryKeyword] = useState('');
-  const availableLanguages = ['English', 'Spanish', 'French', 'German', 'Japanese', 'Chinese', 'Portuguese', 'Italian'];
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showAllLanguages, setShowAllLanguages] = useState(false);
+  
+  // Get all available languages from categories
+  const availableLanguages = useMemo(() => {
+    const allLangs = new Set<string>();
+    Object.values(languageCategories).forEach(langs => {
+      langs.forEach(lang => allLangs.add(lang));
+    });
+    return Array.from(allLangs).sort();
+  }, []);
 
   const toggleLanguage = (lang: string) => {
     if (selectedLanguages.includes(lang)) {
@@ -24,6 +42,32 @@ export function InputPanel({ onGenerate, isGenerating, processingStep, selectedL
       setSelectedLanguages([...selectedLanguages, lang]);
     }
   };
+  
+  const selectAllInCategory = (category: string) => {
+    const categoryLangs = languageCategories[category as keyof typeof languageCategories];
+    const allSelected = categoryLangs.every(lang => selectedLanguages.includes(lang));
+    
+    if (allSelected) {
+      // Deselect all in category
+      setSelectedLanguages(selectedLanguages.filter(lang => !categoryLangs.includes(lang)));
+    } else {
+      // Select all in category
+      const newSelected = new Set([...selectedLanguages, ...categoryLangs]);
+      setSelectedLanguages(Array.from(newSelected));
+    }
+  };
+  
+  const clearAll = () => {
+    setSelectedLanguages([]);
+  };
+  
+  // Filter languages based on search
+  const filteredLanguages = useMemo(() => {
+    if (!searchQuery) return availableLanguages;
+    return availableLanguages.filter(lang => 
+      lang.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery, availableLanguages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,28 +115,153 @@ export function InputPanel({ onGenerate, isGenerating, processingStep, selectedL
           />
         </div>
 
+        {/* Target Languages Section - Improved */}
         <div>
-          <label className="block text-base text-white/50 mb-3">
-            Target Languages
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {availableLanguages.map(lang => (
-              <Badge
-                key={lang}
-                variant={selectedLanguages.includes(lang) ? "default" : "outline"}
-                className={`cursor-pointer transition-all text-sm ${
-                  selectedLanguages.includes(lang)
-                    ? 'bg-[#a3ff12] text-black hover:bg-[#92e610]'
-                    : 'bg-transparent border-white/20 text-white/60 hover:border-white/40 hover:text-white/80'
-                }`}
-                onClick={() => toggleLanguage(lang)}
-              >
-                {lang}
-                {selectedLanguages.includes(lang) && (
-                  <X className="w-3 h-3 ml-1" />
+          <div className="flex items-center justify-between mb-3">
+            <label className="text-base text-blue-500 flex items-center gap-2">
+              <Globe2 className="w-5 h-5" style={{color: "#A3FF12"}} />
+              Target Languages
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-white/40">
+                {selectedLanguages.length} selected
+              </span>
+              {selectedLanguages.length > 0 && (
+                <button
+                  type="button"
+                  onClick={clearAll}
+                  className="text-sm text-[#a3ff12] hover:text-[#92e610] transition-colors"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Search Bar */}
+          <div className="relative mb-3">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{left: "10px"
+            }}>
+              <Search className="w-4 h-4 text-white/30" />
+            </div>
+            <Input
+              type="text"
+              placeholder="Search languages..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-[#0a0a0a] border-white/10 focus:border-[#a3ff12]/50 focus:ring-[#a3ff12]/20 text-white placeholder:text-white/30 h-10 pl-10 text-sm"
+              style={{padding: "0 30px"}}
+            />
+          </div>
+
+          {/* Selected Languages - Show at top if any selected */}
+          {selectedLanguages.length > 0 && !searchQuery && (
+            <div className="mb-3 p-3 bg-[#a3ff12]/5 border border-[#a3ff12]/20 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#a3ff12]" />
+                <span className="text-sm text-white/60 font-medium">Selected Languages</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {selectedLanguages.map(lang => (
+                  <Badge
+                    key={lang}
+                    className="bg-[#a3ff12] text-black hover:bg-[#92e610] cursor-pointer transition-all text-xs px-2 py-1"
+                    onClick={() => toggleLanguage(lang)}
+                  >
+                    {lang}
+                    <X className="w-3 h-3 ml-1" />
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Language Categories or Search Results */}
+          <div className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent pr-2">
+            {searchQuery ? (
+              // Search Results
+              <div className="space-y-2">
+                {filteredLanguages.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {filteredLanguages.map(lang => (
+                      <Badge
+                        key={lang}
+                        variant={selectedLanguages.includes(lang) ? "default" : "outline"}
+                        className={`cursor-pointer transition-all text-xs ${
+                          selectedLanguages.includes(lang)
+                            ? 'bg-[#a3ff12] text-black hover:bg-[#92e610]'
+                            : 'bg-transparent border-white/20 text-white/60 hover:border-white/40 hover:text-white/80'
+                        }`}
+                        onClick={() => toggleLanguage(lang)}
+                      >
+                        {lang}
+                        {selectedLanguages.includes(lang) && (
+                          <X className="w-3 h-3 ml-1" />
+                        )}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-white/40 text-sm">No languages found</p>
+                  </div>
                 )}
-              </Badge>
-            ))}
+              </div>
+            ) : (
+              // Categories View
+              <div className="space-y-4">
+                {Object.entries(languageCategories).map(([category, languages]) => {
+                  const categorySelected = languages.filter(lang => selectedLanguages.includes(lang)).length;
+                  const allSelected = categorySelected === languages.length;
+                  
+                  return (
+                    <div key={category} className="border border-white/10 rounded-lg p-3 bg-white/[0.02] hover:border-white/20 transition-all">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-medium text-white/80">{category}</h4>
+                          <span className="text-xs text-white/40">({languages.length})</span>
+                          {categorySelected > 0 && (
+                            <span className="text-xs text-[#a3ff12]">
+                              {categorySelected} selected
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => selectAllInCategory(category)}
+                          className={`text-xs transition-colors ${
+                            allSelected 
+                              ? 'text-[#a3ff12] hover:text-[#92e610]' 
+                              : 'text-white/40 hover:text-white/60'
+                          }`}
+                        >
+                          {allSelected ? 'Deselect all' : 'Select all'}
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {languages.map(lang => (
+                          <Badge
+                            key={lang}
+                            variant={selectedLanguages.includes(lang) ? "default" : "outline"}
+                            className={`cursor-pointer transition-all text-xs ${
+                              selectedLanguages.includes(lang)
+                                ? 'bg-[#a3ff12] text-black hover:bg-[#92e610]'
+                                : 'bg-transparent border-white/20 text-white/60 hover:border-white/40 hover:text-white/80'
+                            }`}
+                            onClick={() => toggleLanguage(lang)}
+                          >
+                            {lang}
+                            {selectedLanguages.includes(lang) && (
+                              <X className="w-3 h-3 ml-1" />
+                            )}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
