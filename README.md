@@ -148,38 +148,12 @@ Environment variables:
 
 ## Development
 
-### Running Locally
-
-Both backend and frontend support hot reloading during development:
-
-```bash
-# Backend
-cd backend && npm run dev
-
-# Frontend
-cd frontend && npm run dev
-```
-
-### Adding New Languages
-
-1. Add the language code to `supportedLanguages` in `backend/config.json`
-2. The system will automatically handle translation for the new language
-
 ### Testing Changes
 
 Use the provided test script to verify end-to-end functionality:
 
 ```bash
 ./test-translation-integration.sh
-```
-
-### Code Quality
-
-Run linting on the frontend:
-
-```bash
-cd frontend
-npm run lint
 ```
 
 ## License
