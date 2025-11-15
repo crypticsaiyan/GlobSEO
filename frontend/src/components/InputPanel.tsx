@@ -118,7 +118,7 @@ export function InputPanel({ onGenerate, isGenerating, processingStep, selectedL
         {/* Target Languages Section - Improved */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <label className="text-base text-blue-500 flex items-center gap-2">
+            <label className="text-base text-white flex items-center gap-2">
               <Globe2 className="w-5 h-5" style={{color: "#A3FF12"}} />
               Target Languages
             </label>

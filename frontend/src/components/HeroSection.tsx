@@ -63,7 +63,7 @@ export function HeroSection() {
                 {/* Back image - jp.png */}
                 <div
                   onClick={() => setActiveImage("jp")}
-                  className="absolute w-full rounded-2xl shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500 cursor-pointer transition-all ease-in-out"
+                  className="absolute w-full rounded-2xl shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300 delay-200 cursor-pointer transition-all ease-in-out"
                   style={{
                     top: "300px",
                     left: "-150px",

@@ -1,19 +1,19 @@
 {
   "greeting": "Hola desde Lingo.dev",
   "meta": {
-    "title": "LinkedIn: iniciar sesión o registrarse",
-    "description": "1.000 millones de miembros | Gestiona tu identidad profesional. Construye y participa en tu red profesional. Accede a conocimientos, ideas y oportunidades.",
+    "title": "Dominio de ejemplo",
+    "description": "",
     "keywords": "",
-    "h1": "\n          Explora empleos y haz crecer tu red profesional\n        "
+    "h1": "Dominio de ejemplo"
   },
   "og": {
-    "title": "LinkedIn: iniciar sesión o registrarse",
-    "description": "1.000 millones de miembros | Gestiona tu identidad profesional. Construye y participa en tu red profesional. Accede a conocimientos, ideas y oportunidades."
+    "title": "Dominio de ejemplo",
+    "description": ""
   },
   "twitter": {
-    "title": "LinkedIn: iniciar sesión o registrarse",
-    "description": "1.000 millones de miembros | Gestiona tu identidad profesional. Construye y participa en tu red profesional. Accede a conocimientos, ideas y oportunidades."
+    "title": "Dominio de ejemplo",
+    "description": ""
   },
   "_sourceUrl": "https://crypticsaiyan.github.io",
-  "_sourceHost": "example.cfh"
+  "_sourceHost": "example.com"
 }

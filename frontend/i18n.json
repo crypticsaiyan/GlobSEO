@@ -4,8 +4,7 @@
   "locale": {
     "source": "en",
     "targets": [
-      "es",
-      "ja"
+      "es"
     ]
   },
   "buckets": {

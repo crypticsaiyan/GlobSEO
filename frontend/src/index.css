@@ -1,6 +1,4 @@
-/*! tailwindcss v4.1.3 | MIT License | https://tailwindcss.com */
 
-/* Custom Scrollbar Styles */
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(163, 255, 18, 0.3) rgba(255, 255, 255, 0.05);
