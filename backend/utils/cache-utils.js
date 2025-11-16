@@ -255,9 +255,24 @@ export async function getCacheStats() {
       };
     }
 
-    // Redis stats
-    const keys = await client.keys(`${CACHE_KEY_PREFIX}*`);
-    const totalEntries = keys.length;
+    // Redis stats - use SCAN instead of KEYS to avoid loading all keys into memory
+    let totalEntries = 0;
+    try {
+      let cursor = 0;
+      do {
+        const scanResult = await client.scan(cursor, { match: `${CACHE_KEY_PREFIX}*`, count: 100 });
+        cursor = scanResult.cursor;
+        totalEntries += scanResult.keys.length;
+      } while (cursor !== 0);
+    } catch (scanError) {
+      // Fallback to KEYS if SCAN not available
+      try {
+        const keys = await client.keys(`${CACHE_KEY_PREFIX}*`);
+        totalEntries = keys.length;
+      } catch (keysError) {
+        totalEntries = 0;
+      }
+    }
 
     // Try to get memory info, but handle if not available (Upstash doesn't support INFO)
     let memoryUsage = 'N/A (Upstash)';
@@ -267,7 +282,7 @@ export async function getCacheStats() {
       memoryUsage = `${(memBytes / 1024 / 1024).toFixed(2)} MB`;
     } catch (infoError) {
       // INFO command not available in Upstash Redis
-      log.debug('Memory info not available (Upstash Redis limitation)');
+      // Expected behavior - no need to log
     }
 
     return {

@@ -13,7 +13,7 @@ dotenv.config();
  */
 function extractContent($) {
   // Remove script, style, and other non-content elements
-  $('script, style, nav, footer, aside, iframe, noscript').remove();
+  $('script, style, nav, footer, aside, iframe, noscript, link, meta').remove();
   
   // Get text from main content areas
   const contentSelectors = [
@@ -36,11 +36,11 @@ function extractContent($) {
     }
   }
   
-  // Clean up whitespace and return first 2000 characters
+  // Clean up whitespace and return first 1000 characters to save memory
   return content
     .replace(/\s+/g, ' ')
     .trim()
-    .substring(0, 2000);
+    .substring(0, 1000);
 }
 
 /**
@@ -52,11 +52,38 @@ function extractContent($) {
  */
 export async function scrapeMetadata(url, options = {}) {
   const { includeContent = true } = options;
-  const browser = await chromium.launch({ headless: true });
+  
+  // Use lighter browser configuration to reduce memory usage
+  const browser = await chromium.launch({ 
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-accelerated-2d-canvas',
+      '--no-first-run',
+      '--no-zygote',
+      '--single-process', // <- this one disables sandbox
+      '--disable-gpu'
+    ]
+  });
+  
   const page = await browser.newPage();
   
   try {
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+    // Set reasonable viewport and disable images to save memory
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.route('**/*', (route) => {
+      const request = route.request();
+      if (request.resourceType() === 'image' || request.resourceType() === 'media' || request.resourceType() === 'font') {
+        route.abort();
+      } else {
+        route.continue();
+      }
+    });
+    
+    // Set a reasonable timeout and memory limit
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 15000 });
     const html = await page.content();
     
     // Load HTML into cheerio for parsing

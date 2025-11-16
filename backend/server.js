@@ -24,6 +24,24 @@ import { log, colors } from './utils/logger.js';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Memory monitoring and limits
+setInterval(() => {
+  const memUsage = process.memoryUsage();
+  const rss = (memUsage.rss / 1024 / 1024).toFixed(2);
+  const heapUsed = (memUsage.heapUsed / 1024 / 1024).toFixed(2);
+  const heapTotal = (memUsage.heapTotal / 1024 / 1024).toFixed(2);
+  
+  if (parseFloat(rss) > 350) { // Log if over 350MB
+    console.log(`[MEMORY] RSS: ${rss}MB, Heap: ${heapUsed}/${heapTotal}MB`);
+    
+    // Force garbage collection if available
+    if (global.gc) {
+      global.gc();
+      console.log('[MEMORY] Forced garbage collection');
+    }
+  }
+}, 30000); // Check every 30 seconds
+
 // Middleware
 app.use(cors());
 app.use(express.json());
