@@ -24,8 +24,6 @@ GlobSEO analyzes website metadata, translates it to multiple languages (optional
 
 ## Screenshots
 
-![Hero Page](assets/screenshots/hero.png)
-
 | ![](assets/screenshots/image.png) |
 | :------------------------------------------: |
 | *SEO Quality Analysis* |
