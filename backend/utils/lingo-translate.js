@@ -19,28 +19,7 @@ import {
   mergeTranslations
 } from './cache-utils.js';
 
-// ANSI color codes for professional logging
-const colors = {
-  reset: '\x1b[0m',
-  bright: '\x1b[1m',
-  dim: '\x1b[2m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  magenta: '\x1b[35m',
-  cyan: '\x1b[36m',
-  white: '\x1b[37m'
-};
-
-const log = {
-  info: (msg) => console.log(`${colors.blue}[INFO]${colors.reset} ${msg}`),
-  success: (msg) => console.log(`${colors.green}[SUCCESS]${colors.reset} ${msg}`),
-  warning: (msg) => console.log(`${colors.yellow}[WARNING]${colors.reset} ${msg}`),
-  error: (msg) => console.log(`${colors.red}[ERROR]${colors.reset} ${msg}`),
-  cache: (msg) => console.log(`${colors.cyan}[CACHE]${colors.reset} ${msg}`),
-  debug: (msg) => console.log(`${colors.dim}[DEBUG]${colors.reset} ${msg}`)
-};
+import { log, colors } from './logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

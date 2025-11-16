@@ -6,6 +6,10 @@
  */
 
 import assert from 'assert';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 // Test data - minimal content to avoid large translations
 const testMetadata = {
@@ -28,16 +32,23 @@ async function testProcessMetadataTranslations() {
     // Import the function
     const { processMetadataTranslations } = await import('../utils/lingo-translate.js');
 
+    // Get API key from environment
+    const lingoApiKey = process.env.LINGODOTDEV_API_KEY;
+
     // Test with same language (should return empty)
-    const resultSameLang = await processMetadataTranslations(testMetadata, ['en']);
+    const resultSameLang = await processMetadataTranslations(testMetadata, ['en'], lingoApiKey);
     assert(typeof resultSameLang === 'object', 'Result should be an object');
     assert(Object.keys(resultSameLang).length === 0, 'Same language should return empty object');
     console.log('✅ Same language filtering works');
 
     // Test with different language (may use cache or fail gracefully)
-    const resultDiffLang = await processMetadataTranslations(testMetadata, ['es']);
-    assert(typeof resultDiffLang === 'object', 'Result should be an object');
-    console.log('✅ Different language processing works');
+    if (lingoApiKey) {
+      const resultDiffLang = await processMetadataTranslations(testMetadata, ['es'], lingoApiKey);
+      assert(typeof resultDiffLang === 'object', 'Result should be an object');
+      console.log('✅ Different language processing works');
+    } else {
+      console.log('⚠️  Skipping translation test (no LINGODOTDEV_API_KEY set)');
+    }
 
   } catch (error) {
     console.error('❌ processMetadataTranslations test failed:', error.message);
@@ -111,7 +122,7 @@ async function runTests() {
     console.log('');
 
     console.log('🎉 All tests passed!');
-    console.log('Note: Full integration tests require Lingo.dev CLI setup');
+    console.log('Note: Full integration tests require LINGODOTDEV_API_KEY environment variable');
 
   } catch (error) {
     console.error('\n❌ Test suite failed:', error.message);
