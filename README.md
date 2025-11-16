@@ -351,4 +351,4 @@ For comprehensive integration testing, create a custom test script that exercise
 
 ## License
 
-ISC License
+MIT License
