@@ -51,9 +51,14 @@ GlobSEO analyzes website metadata, translates it to multiple languages (optional
    cp .env.example .env
    ```
    
-   Then edit `.env` with your actual API keys:
-   - `GEMINI_API_KEY`: Your Google Gemini API key for SEO analysis
-   - `LINGODOTDEV_API_KEY`: Your Lingo.dev API key for translations
+   Then edit `.env` with your actual API keys and configuration:
+   - `GEMINI_API_KEY`: Your Google Gemini API key for SEO analysis (required)
+   - `LINGODOTDEV_API_KEY`: Your Lingo.dev API key for translations (required for multilingual analysis)
+   - `UPSTASH_REDIS_REST_URL`: Your Upstash Redis REST URL for caching (optional, falls back to in-memory cache)
+   - `UPSTASH_REDIS_REST_TOKEN`: Your Upstash Redis REST token for caching (optional, falls back to in-memory cache)
+   - `CACHE_EXPIRY_SECONDS`: Cache expiry time in seconds (default: 86400 = 24 hours)
+   - `PORT`: Backend server port (default: 3001)
+   - `NODE_ENV`: Environment mode (development/production)
 
 ### Frontend Setup
 
@@ -188,7 +193,8 @@ Required:
 
 Optional:
 - `PORT`: Server port (default: 3001)
-- `REDIS_URL`: Redis connection URL (default: redis://localhost:6379)
+- `UPSTASH_REDIS_REST_URL`: Upstash Redis REST URL for caching (optional, falls back to in-memory cache)
+- `UPSTASH_REDIS_REST_TOKEN`: Upstash Redis REST token for caching (optional, falls back to in-memory cache)
 - `CACHE_EXPIRY_SECONDS`: Cache TTL in seconds (default: 86400 - 24 hours)
 - `NODE_ENV`: Environment mode ("development", "production")
 
