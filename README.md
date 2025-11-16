@@ -22,6 +22,21 @@ GlobSEO analyzes website metadata, translates it to multiple languages (optional
 - **Dark Theme**: Modern dark theme with professional aesthetics
 - **REST API**: Comprehensive API for integration with other tools
 
+## Screenshots
+
+![Hero Page](assets/screenshots/hero.png)
+
+| ![](assets/screenshots/image.png) |
+| :------------------------------------------: |
+| *SEO Quality Analysis* |
+
+| ![Japanese Translation Result](assets/screenshots/jp.png) | ![Social Media Card](assets/screenshots/card.png) |
+| :-------------------------------------------------: | :-----------------------------------------------: |
+| *Japanese Translation Result* | *Social Media Card Preview* |
+
+| ![Copy Button](assets/screenshots/copy.png) |
+| :------------------------------------------: |
+| *Copy Button* |
 ## Installation
 
 ### Prerequisites
@@ -198,16 +213,45 @@ Optional:
 - `CACHE_EXPIRY_SECONDS`: Cache TTL in seconds (default: 86400 - 24 hours)
 - `NODE_ENV`: Environment mode ("development", "production")
 
-## Technologies
+## Tech Stack
 
-- **Backend**: Node.js, Express.js, Playwright (web scraping), Google Generative AI (SEO scoring)
-- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS, Radix UI components
-- **Translation**: Lingo.dev CLI for professional translations
-- **Scraping**: Cheerio for HTML parsing, Axios for HTTP requests
-- **Caching**: Redis for high-performance caching with in-memory fallback
+### Backend
+- **Runtime**: Node.js 18+
+- **Framework**: Express.js
+- **Web Scraping**: Playwright (headless browser automation)
+- **HTML Parsing**: Cheerio
+- **AI Integration**: Google Generative AI (Gemini) for SEO analysis
+- **Translation Service**: Lingo.dev CLI for professional translations
+- **Caching**: Upstash Redis (with in-memory fallback)
 - **Rate Limiting**: Express rate limiting middleware
-- **Logging**: Centralized ANSI color-coded logging system
-- **Development**: ESLint, PostCSS, Autoprefixer, TypeScript
+- **HTTP Client**: Axios
+- **Logging**: Custom ANSI color-coded logging system
+- **Environment**: dotenv for configuration management
+
+### Frontend
+- **Framework**: React 19 with TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS with PostCSS and Autoprefixer
+- **UI Components**: Radix UI (headless component library)
+- **Icons**: Lucide React
+- **State Management**: React hooks
+- **Internationalization**: Custom i18n system with 60+ language support
+- **Linting**: ESLint with TypeScript support
+- **Theme**: next-themes for dark/light mode
+
+### Development & Testing
+- **Version Control**: Git
+- **Package Management**: npm
+- **Testing**: Custom integration tests
+- **Code Quality**: ESLint, TypeScript strict mode
+- **Browser Automation**: Playwright for E2E testing
+
+### Infrastructure & Deployment
+- **Database**: Redis (Upstash cloud or local)
+- **API**: RESTful endpoints with JSON responses
+- **Caching Strategy**: MD5-based cache keys with TTL
+- **Error Handling**: Comprehensive try-catch with user-friendly messages
+- **Security**: Rate limiting, input validation, CORS
 
 ## Project Structure
 
