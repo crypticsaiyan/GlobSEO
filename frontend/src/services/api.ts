@@ -96,37 +96,51 @@ class APIService {
    * Scrape metadata from a URL
    */
   async scrape(url: string): Promise<Metadata> {
-    const response = await fetch(`${API_BASE_URL}/scrape`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url })
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/scrape`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to scrape URL');
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(`Scrape failed: ${error.message || 'Failed to scrape URL'}`);
+      }
+
+      const data = await response.json();
+      return data.metadata;
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error(`Network error during scrape: Cannot connect to ${API_BASE_URL}/scrape. Is the backend running?`);
+      }
+      throw error;
     }
-
-    const data = await response.json();
-    return data.metadata;
   }
 
   /**
    * Scrape and get SEO score in one call
    */
   async scrapeAndScore(url: string, primaryKeyword?: string, geminiApiKey?: string): Promise<ScrapeAndScoreResponse> {
-    const response = await fetch(`${API_BASE_URL}/scrape-and-score`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, primaryKeyword, geminiApiKey })
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/scrape-and-score`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, primaryKeyword, geminiApiKey })
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to scrape and score');
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(`Scrape and score failed: ${error.message || 'Failed to scrape and score'}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error(`Network error during scrape-and-score: Cannot connect to ${API_BASE_URL}/scrape-and-score. Is the backend running?`);
+      }
+      throw error;
     }
-
-    return response.json();
   }
 
   /**
@@ -163,6 +177,9 @@ class APIService {
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('Request timed out. The analysis is taking longer than expected.');
       }
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error(`Network error during scrape-translate-score: Cannot connect to ${API_BASE_URL}/scrape-translate-score. Is the backend running?`);
+      }
       throw error;
     }
   }
@@ -180,58 +197,86 @@ class APIService {
     language?: string;
     primaryKeyword?: string;
   }): Promise<{ success: boolean; analysis: SEOAnalysis }> {
-    const response = await fetch(`${API_BASE_URL}/seo-score`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params)
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/seo-score`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params)
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to generate SEO score');
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(`SEO score generation failed: ${error.message || 'Failed to generate SEO score'}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error(`Network error during seo-score: Cannot connect to ${API_BASE_URL}/seo-score. Is the backend running?`);
+      }
+      throw error;
     }
-
-    return response.json();
   }
 
   /**
    * Scrape and translate metadata
    */
   async translate(url: string, languages: string[], lingoApiKey?: string): Promise<TranslateResponse> {
-    const response = await fetch(`${API_BASE_URL}/translate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, languages, lingoApiKey })
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/translate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, languages, lingoApiKey })
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to translate');
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(`Translation failed: ${error.message || 'Failed to translate'}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error(`Network error during translate: Cannot connect to ${API_BASE_URL}/translate. Is the backend running?`);
+      }
+      throw error;
     }
-
-    return response.json();
   }
 
   /**
    * Get list of supported languages
    */
   async getLanguages(): Promise<Array<{ code: string; name: string; native: string }>> {
-    const response = await fetch(`${API_BASE_URL}/languages`);
+    try {
+      const response = await fetch(`${API_BASE_URL}/languages`);
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch languages');
+      if (!response.ok) {
+        throw new Error('Failed to fetch languages');
+      }
+
+      const data = await response.json();
+      return data.supported;
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error(`Network error during languages: Cannot connect to ${API_BASE_URL}/languages. Is the backend running?`);
+      }
+      throw error;
     }
-
-    const data = await response.json();
-    return data.supported;
   }
 
   /**
    * Health check
    */
   async health(): Promise<{ status: string; message: string }> {
-    const response = await fetch(`${API_BASE_URL}/health`);
-    return response.json();
+    try {
+      const response = await fetch(`${API_BASE_URL}/health`);
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error(`Network error during health check: Cannot connect to ${API_BASE_URL}/health. Is the backend running?`);
+      }
+      throw error;
+    }
   }
 }
 
