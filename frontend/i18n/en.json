@@ -1,19 +1,19 @@
 {
   "greeting": "Hello from Lingo.dev",
   "meta": {
-    "title": "Example Domain",
+    "title": "Portfolio Website",
     "description": "",
     "keywords": "",
-    "h1": "Example Domain"
+    "h1": "Loading"
   },
   "og": {
-    "title": "Example Domain",
+    "title": "Portfolio Website",
     "description": ""
   },
   "twitter": {
-    "title": "Example Domain",
+    "title": "Portfolio Website",
     "description": ""
   },
   "_sourceUrl": "https://crypticsaiyan.github.io",
-  "_sourceHost": "example.com"
+  "_sourceHost": "crypticsaiyan.github.io"
 }

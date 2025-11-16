@@ -1,79 +1,127 @@
 #!/usr/bin/env node
 
 /**
- * Cache Utilities for Translation Optimization
- * Implements both in-memory and persistent file-based caching
+ * Production Cache Utilities for Translation Optimization
+ * Uses Redis for high-performance, scalable caching
  */
 
 import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
+import { createClient } from 'redis';
 
-const CACHE_DIR = path.join(process.cwd(), '.cache');
-const CACHE_FILE = path.join(CACHE_DIR, 'translations.json');
-const CACHE_EXPIRY_HOURS = 24; 
+// Redis configuration
+const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+const CACHE_EXPIRY_SECONDS = parseInt(process.env.CACHE_EXPIRY_SECONDS) || (24 * 60 * 60); // 24 hours default
+const CACHE_KEY_PREFIX = 'globseo:translation:';
 
-// In-memory cache
-const memoryCache = new Map();
+// Redis client
+let redisClient = null;
+let useInMemoryFallback = false;
+const memoryCache = new Map(); // Fallback in-memory cache
+
+/**
+ * Initialize Redis connection
+ */
+async function initializeRedis() {
+  if (redisClient && !useInMemoryFallback) return redisClient;
+
+  if (useInMemoryFallback) {
+    return null;
+  }
+
+  // For development/testing, check if Redis environment variable is set
+  if (!process.env.REDIS_URL || process.env.REDIS_URL === 'redis://localhost:6379') {
+    // Try a quick connection test
+    try {
+      const testClient = createClient({
+        url: REDIS_URL,
+        socket: { connectTimeout: 1000 }
+      });
+
+      await Promise.race([
+        testClient.connect(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Connection timeout')), 1000)
+        )
+      ]);
+
+      await testClient.quit();
+      console.log('Redis is available, using Redis cache');
+    } catch (error) {
+      console.log('Redis not available, using in-memory cache fallback');
+      useInMemoryFallback = true;
+      return null;
+    }
+  }
+
+  try {
+    redisClient = createClient({
+      url: REDIS_URL,
+      socket: {
+        connectTimeout: 5000,
+        lazyConnect: true,
+      }
+    });
+
+    redisClient.on('error', (err) => {
+      console.error('Redis Client Error:', err.message);
+    });
+
+    redisClient.on('connect', () => {
+      console.log('Connected to Redis');
+    });
+
+    redisClient.on('ready', () => {
+      console.log('Redis client ready');
+    });
+
+    await redisClient.connect();
+    return redisClient;
+  } catch (error) {
+    console.error('Failed to initialize Redis:', error.message);
+    console.warn('Falling back to in-memory cache');
+    useInMemoryFallback = true;
+    return null;
+  }
+}
 
 /**
  * Generate cache key from content and target languages
  * @param {Object} content - Content to translate
  * @param {string} sourceLang - Source language code
  * @param {Array<string>} targetLangs - Target language codes
- * @returns {string} - MD5 hash cache key
+ * @returns {string} - Redis cache key
  */
 export function getCacheKey(content, sourceLang, targetLangs) {
   const normalizedContent = JSON.stringify(content);
   const sortedTargets = [...targetLangs].sort().join(',');
   const cacheString = `${sourceLang}:${sortedTargets}:${normalizedContent}`;
-  
-  return crypto.createHash('md5').update(cacheString).digest('hex');
+
+  const hash = crypto.createHash('md5').update(cacheString).digest('hex');
+  console.log(`🔑 Cache key generated: ${hash.substring(0, 12)}... for host: ${content._sourceHost || 'unknown'}`);
+  return hash;
 }
 
 /**
- * Initialize cache directory and load persistent cache
+ * Get full Redis key with prefix
+ * @param {string} cacheKey - MD5 cache key
+ * @returns {string} - Full Redis key
  */
-export function initializeCache() {
-  if (!fs.existsSync(CACHE_DIR)) {
-    fs.mkdirSync(CACHE_DIR, { recursive: true });
-  }
-
-  // Load persistent cache into memory
-  if (fs.existsSync(CACHE_FILE)) {
-    try {
-      const cacheData = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
-      let validEntries = 0;
-      let expiredEntries = 0;
-
-      for (const [key, entry] of Object.entries(cacheData)) {
-        if (isCacheValid(entry)) {
-          memoryCache.set(key, entry);
-          validEntries++;
-        } else {
-          expiredEntries++;
-        }
-      }
-
-      console.log(`Cache loaded: ${validEntries} valid entries, ${expiredEntries} expired`);
-    } catch (error) {
-      console.warn('Failed to load cache:', error.message);
-    }
-  }
+function getRedisKey(cacheKey) {
+  return `${CACHE_KEY_PREFIX}${cacheKey}`;
 }
 
 /**
- * Check if cache entry is still valid
+ * Check if cache entry is still valid (for in-memory fallback)
  * @param {Object} entry - Cache entry
  * @returns {boolean}
  */
 function isCacheValid(entry) {
   if (!entry || !entry.timestamp) return false;
-  
+
   const now = Date.now();
   const age = now - entry.timestamp;
-  const maxAge = CACHE_EXPIRY_HOURS * 60 * 60 * 1000;
-  
+  const maxAge = CACHE_EXPIRY_SECONDS * 1000;
+
   return age < maxAge;
 }
 
@@ -82,20 +130,45 @@ function isCacheValid(entry) {
  * @param {string} cacheKey - Cache key
  * @returns {Object|null} - Cached translations or null
  */
-export function getCachedTranslation(cacheKey) {
-  const entry = memoryCache.get(cacheKey);
-  
-  if (!entry) {
-    return null;
+export async function getCachedTranslation(cacheKey) {
+  const client = await initializeRedis();
+
+  if (!client || useInMemoryFallback) {
+    // Use in-memory fallback
+    const entry = memoryCache.get(cacheKey);
+    if (!entry) return null;
+
+    if (!isCacheValid(entry)) {
+      memoryCache.delete(cacheKey);
+      return null;
+    }
+
+    console.log(`Cache HIT (memory) for key: ${cacheKey.substring(0, 8)}...`);
+    return entry.translations;
   }
 
-  if (!isCacheValid(entry)) {
-    memoryCache.delete(cacheKey);
+  try {
+    const redisKey = getRedisKey(cacheKey);
+    const cachedData = await client.get(redisKey);
+
+    if (!cachedData) {
+      return null;
+    }
+
+    const entry = JSON.parse(cachedData);
+
+    // Check if entry has expired (double-check in case Redis TTL failed)
+    if (entry.timestamp && (Date.now() - entry.timestamp) > (CACHE_EXPIRY_SECONDS * 1000)) {
+      await client.del(redisKey);
+      return null;
+    }
+
+    console.log(`Cache HIT (redis) for key: ${cacheKey.substring(0, 8)}...`);
+    return entry.translations;
+  } catch (error) {
+    console.error('Error getting cached translation:', error.message);
     return null;
   }
-
-  console.log(`Cache HIT for key: ${cacheKey.substring(0, 8)}...`);
-  return entry.translations;
 }
 
 /**
@@ -104,18 +177,37 @@ export function getCachedTranslation(cacheKey) {
  * @param {Object} translations - Translations to cache
  * @param {Array<string>} targetLanguages - Target languages
  */
-export function setCachedTranslation(cacheKey, translations, targetLanguages) {
-  const entry = {
-    translations,
-    targetLanguages,
-    timestamp: Date.now(),
-    created: new Date().toISOString()
-  };
+export async function setCachedTranslation(cacheKey, translations, targetLanguages) {
+  const client = await initializeRedis();
 
-  memoryCache.set(cacheKey, entry);
-  console.log(`Cached translation for key: ${cacheKey.substring(0, 8)}...`);
+  if (!client || useInMemoryFallback) {
+    // Use in-memory fallback
+    const entry = {
+      translations,
+      targetLanguages,
+      timestamp: Date.now(),
+      created: new Date().toISOString()
+    };
+    memoryCache.set(cacheKey, entry);
+    console.log(`Cached translation (memory) for key: ${cacheKey.substring(0, 8)}...`);
+    return;
+  }
 
-  persistCache();
+  try {
+    const entry = {
+      translations,
+      targetLanguages,
+      timestamp: Date.now(),
+      created: new Date().toISOString()
+    };
+
+    const redisKey = getRedisKey(cacheKey);
+    await client.setEx(redisKey, CACHE_EXPIRY_SECONDS, JSON.stringify(entry));
+
+    console.log(`Cached translation (redis) for key: ${cacheKey.substring(0, 8)}...`);
+  } catch (error) {
+    console.error('Error setting cached translation:', error.message);
+  }
 }
 
 /**
@@ -154,40 +246,18 @@ export function mergeTranslations(existing, newTranslations) {
 }
 
 /**
- * Persist cache to disk
+ * Clear expired cache entries (Redis handles TTL automatically, but this can be used for manual cleanup)
  */
-function persistCache() {
+export async function cleanupCache() {
   try {
-    const cacheData = {};
-    
-    for (const [key, entry] of memoryCache.entries()) {
-      if (isCacheValid(entry)) {
-        cacheData[key] = entry;
-      }
-    }
+    const client = await initializeRedis();
+    if (!client) return;
 
-    fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
+    // Redis handles TTL automatically, but we can scan for expired entries if needed
+    // For now, just log that cleanup is handled by Redis TTL
+    console.log('Cache cleanup handled automatically by Redis TTL');
   } catch (error) {
-    console.warn('Failed to persist cache:', error.message);
-  }
-}
-
-/**
- * Clear expired cache entries
- */
-export function cleanupCache() {
-  let removed = 0;
-  
-  for (const [key, entry] of memoryCache.entries()) {
-    if (!isCacheValid(entry)) {
-      memoryCache.delete(key);
-      removed++;
-    }
-  }
-
-  if (removed > 0) {
-    console.log(`Cleaned up ${removed} expired cache entries`);
-    persistCache();
+    console.error('Error during cache cleanup:', error.message);
   }
 }
 
@@ -195,48 +265,97 @@ export function cleanupCache() {
  * Get cache statistics
  * @returns {Object} - Cache stats
  */
-export function getCacheStats() {
-  const stats = {
-    totalEntries: memoryCache.size,
-    validEntries: 0,
-    expiredEntries: 0,
-    cacheSize: 0
-  };
-
-  for (const entry of memoryCache.values()) {
-    if (isCacheValid(entry)) {
-      stats.validEntries++;
-    } else {
-      stats.expiredEntries++;
-    }
-  }
-
+export async function getCacheStats() {
   try {
-    if (fs.existsSync(CACHE_FILE)) {
-      stats.cacheSize = fs.statSync(CACHE_FILE).size;
-    }
-  } catch (error) {
-    // Ignore
-  }
+    const client = await initializeRedis();
 
-  return stats;
+    if (!client || useInMemoryFallback) {
+      // In-memory stats
+      return {
+        totalEntries: memoryCache.size,
+        validEntries: [...memoryCache.values()].filter(entry => isCacheValid(entry)).length,
+        expiredEntries: [...memoryCache.values()].filter(entry => !isCacheValid(entry)).length,
+        cacheSize: 'N/A (in-memory)',
+        redisConnected: false,
+        cacheType: 'in-memory'
+      };
+    }
+
+    // Redis stats
+    const keys = await client.keys(`${CACHE_KEY_PREFIX}*`);
+    const totalEntries = keys.length;
+
+    const info = await client.info('memory');
+    const memoryUsage = parseInt(info.match(/used_memory:(\d+)/)?.[1] || 0);
+
+    return {
+      totalEntries,
+      validEntries: totalEntries, // Redis handles expiry
+      expiredEntries: 0, // Redis handles expiry
+      cacheSize: `${(memoryUsage / 1024 / 1024).toFixed(2)} MB`,
+      redisConnected: true,
+      cacheType: 'redis',
+      redisUrl: REDIS_URL
+    };
+  } catch (error) {
+    console.error('Error getting cache stats:', error.message);
+    return {
+      totalEntries: 0,
+      validEntries: 0,
+      expiredEntries: 0,
+      cacheSize: 0,
+      redisConnected: false,
+      cacheType: 'error',
+      error: error.message
+    };
+  }
 }
 
 /**
  * Clear all cache
  */
-export function clearCache() {
-  memoryCache.clear();
-  
-  if (fs.existsSync(CACHE_FILE)) {
-    fs.unlinkSync(CACHE_FILE);
-  }
+export async function clearCache() {
+  try {
+    const client = await initializeRedis();
 
-  console.log('Cache cleared');
+    if (!client || useInMemoryFallback) {
+      // Clear in-memory cache
+      memoryCache.clear();
+      console.log(`Cleared ${memoryCache.size} entries from in-memory cache`);
+      return;
+    }
+
+    // Clear Redis cache
+    const keys = await client.keys(`${CACHE_KEY_PREFIX}*`);
+    if (keys.length > 0) {
+      await client.del(keys);
+      console.log(`Cleared ${keys.length} entries from Redis cache`);
+    } else {
+      console.log('Redis cache already empty');
+    }
+  } catch (error) {
+    console.error('Error clearing cache:', error.message);
+  }
 }
 
-// Initialize cache on module load
-initializeCache();
+/**
+ * Health check for Redis connection
+ * @returns {boolean} - True if Redis is connected and healthy
+ */
+export async function isRedisHealthy() {
+  try {
+    const client = await initializeRedis();
+    if (!client) return false;
 
-// Cleanup expired entries every hour
-setInterval(cleanupCache, 60 * 60 * 1000);
+    await client.ping();
+    return true;
+  } catch (error) {
+    console.error('Redis health check failed:', error.message);
+    return false;
+  }
+}
+
+// Initialize Redis connection on module load (async)
+initializeRedis().catch(error => {
+  console.error('Failed to initialize Redis on module load:', error.message);
+});

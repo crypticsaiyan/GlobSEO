@@ -9,6 +9,8 @@ import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import crypto from 'crypto';
+import os from 'os';
 import {
   getCacheKey,
   getCachedTranslation,
@@ -63,46 +65,58 @@ function setupI18nConfig(sourceLang, targetLangs) {
  * @returns {Promise<Object>} - Translated content
  */
 async function translateWithLingo(content, sourceLang, targetLang, lingoApiKey) {
+  // Create a unique temporary directory for this translation request
+  const tempDir = path.join(os.tmpdir(), `lingo-translate-${crypto.randomBytes(8).toString('hex')}`);
+  const tempI18nDir = path.join(tempDir, 'i18n');
+
   try {
+    // Ensure temp directory exists
+    fs.mkdirSync(tempI18nDir, { recursive: true });
+
+    // Copy the i18n.json config to temp directory
+    const configPath = path.join(FRONTEND_DIR, 'i18n.json');
+    if (fs.existsSync(configPath)) {
+      fs.copyFileSync(configPath, path.join(tempDir, 'i18n.json'));
+    }
+
     // Ensure source locale file exists with content
-    const sourceFile = path.join(I18N_DIR, `${sourceLang}.json`);
-    
-    // Read existing content or create new
-    let existingContent = {};
-    if (fs.existsSync(sourceFile)) {
-      existingContent = JSON.parse(fs.readFileSync(sourceFile, 'utf8'));
-    }
-    
-    // Merge new content with existing
-    const mergedContent = {
-      ...existingContent,
-      ...content
-    };
-    
-    // Write source file
-    if (!fs.existsSync(I18N_DIR)) {
-      fs.mkdirSync(I18N_DIR, { recursive: true });
-    }
-    fs.writeFileSync(sourceFile, JSON.stringify(mergedContent, null, 2));
-    
+    const sourceFile = path.join(tempI18nDir, `${sourceLang}.json`);
+
+    // Write source content to temp file
+    fs.writeFileSync(sourceFile, JSON.stringify(content, null, 2));
+
     console.log(`Translating from ${sourceLang} to ${targetLang}...`);
-    
-    // Setup i18n.json config
-    setupI18nConfig(sourceLang, [targetLang]);
-    
-    // Run Lingo.dev CLI
+
+    // Setup i18n.json config in temp directory
+    const i18nConfigPath = path.join(tempDir, 'i18n.json');
+    const config = {
+      "$schema": "https://lingo.dev/schema/i18n.json",
+      "version": "1.10",
+      "locale": {
+        "source": sourceLang,
+        "targets": [targetLang]
+      },
+      "buckets": {
+        "json": {
+          "include": ["i18n/[locale].json"]
+        }
+      }
+    };
+    fs.writeFileSync(i18nConfigPath, JSON.stringify(config, null, 2));
+
+    // Run Lingo.dev CLI in temp directory
     try {
-      execSync('npx lingo.dev@latest run', { 
+      execSync('npx lingo.dev@latest run', {
         stdio: 'inherit',
-        cwd: FRONTEND_DIR,
-        env: { 
-          ...process.env, 
-          LINGODOTDEV_API_KEY: lingoApiKey || process.env.LINGODOTDEV_API_KEY 
+        cwd: tempDir,
+        env: {
+          ...process.env,
+          LINGODOTDEV_API_KEY: lingoApiKey || process.env.LINGODOTDEV_API_KEY
         }
       });
 
       // Read translated content
-      const targetFile = path.join(I18N_DIR, `${targetLang}.json`);
+      const targetFile = path.join(tempI18nDir, `${targetLang}.json`);
       if (fs.existsSync(targetFile)) {
         const translated = JSON.parse(fs.readFileSync(targetFile, 'utf8'));
         return translated;
@@ -111,18 +125,27 @@ async function translateWithLingo(content, sourceLang, targetLang, lingoApiKey) 
       }
     } catch (execError) {
       console.error(`[ERROR] Lingo CLI command failed: ${execError.message}`);
-      
+
       // Check if this is an authentication error
       const fullError = `${execError.message} ${execError.stderr || ''}`;
       if (fullError.includes('Authentication failed') || fullError.includes('unauthorized')) {
         throw new Error('Invalid Lingo.dev API key. Please check your API key and try again.');
       }
-      
+
       throw execError;
     }
   } catch (error) {
     console.error(`[ERROR] Translation failed: ${error.message}`);
     throw error;
+  } finally {
+    // Clean up temp directory
+    try {
+      if (fs.existsSync(tempDir)) {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      }
+    } catch (cleanupError) {
+      console.warn(`Failed to cleanup temp directory: ${cleanupError.message}`);
+    }
   }
 }
 
@@ -190,12 +213,16 @@ async function processMetadataTranslations(metadata, targetLanguages, lingoApiKe
 
   // OPTIMIZATION 1: Check cache first
   const cacheKey = getCacheKey(translationContent, sourceLang, actualTargets);
-  const cachedTranslations = getCachedTranslation(cacheKey);
-  
+  console.log(`🔍 Cache key for ${sourceHost}: ${cacheKey.substring(0, 12)}...`);
+  console.log(`📝 Translation content title: "${translationContent.meta.title?.substring(0, 50)}..."`);
+  const cachedTranslations = await getCachedTranslation(cacheKey);
+
   if (cachedTranslations) {
-    console.log('* Using cached translations - NO API calls needed!');
+    console.log(`✅ Cache HIT for ${sourceHost} - found ${Object.keys(cachedTranslations).length} translations`);
     return cachedTranslations;
   }
+
+  console.log(`❌ Cache MISS for ${sourceHost} - will translate ${actualTargets.length} languages`);
 
   // OPTIMIZATION 2: Check for partial translations (incremental)
   let existingTranslations = {};
@@ -203,7 +230,7 @@ async function processMetadataTranslations(metadata, targetLanguages, lingoApiKe
   // Try to find partial cache matches (same content, subset of languages)
   for (const subset of getLanguageSubsets(actualTargets)) {
     const subsetKey = getCacheKey(translationContent, sourceLang, subset);
-    const subsetCache = getCachedTranslation(subsetKey);
+    const subsetCache = await getCachedTranslation(subsetKey);
     
     if (subsetCache) {
       existingTranslations = mergeTranslations(existingTranslations, subsetCache);
@@ -216,84 +243,116 @@ async function processMetadataTranslations(metadata, targetLanguages, lingoApiKe
   
   if (missingLanguages.length === 0) {
     console.log('** All languages found in cache!');
-    setCachedTranslation(cacheKey, existingTranslations, actualTargets);
+    await setCachedTranslation(cacheKey, existingTranslations, actualTargets);
     return existingTranslations;
   }
 
   console.log(`Need to translate ${missingLanguages.length}/${actualTargets.length} languages: ${missingLanguages.join(', ')}`);
 
   try {
-    // Setup i18n.json config with ONLY missing languages
-    console.log(`Setting up Lingo.dev config for languages: ${missingLanguages.join(', ')}`);
-    setupI18nConfig(sourceLang, missingLanguages);
+    // Create a unique temporary directory for this translation request
+    const tempDir = path.join(os.tmpdir(), `lingo-translate-${crypto.randomBytes(8).toString('hex')}`);
+    const tempI18nDir = path.join(tempDir, 'i18n');
 
-    // Write source file ONCE
-    const sourceFile = path.join(I18N_DIR, `${sourceLang}.json`);
-    if (!fs.existsSync(I18N_DIR)) {
-      fs.mkdirSync(I18N_DIR, { recursive: true });
-    }
-    
-    let existingContent = {};
-    if (fs.existsSync(sourceFile)) {
-      existingContent = JSON.parse(fs.readFileSync(sourceFile, 'utf8'));
-    }
-    
-    const mergedContent = {
-      ...existingContent,
-      ...translationContent
+    // Ensure temp directory exists
+    fs.mkdirSync(tempI18nDir, { recursive: true });
+
+    // Copy the i18n.json config to temp directory and modify for multiple languages
+    const configPath = path.join(FRONTEND_DIR, 'i18n.json');
+    let baseConfig = {
+      "$schema": "https://lingo.dev/schema/i18n.json",
+      "version": "1.10",
+      "locale": {
+        "source": sourceLang,
+        "targets": missingLanguages
+      },
+      "buckets": {
+        "json": {
+          "include": ["i18n/[locale].json"]
+        }
+      }
     };
-    
-    fs.writeFileSync(sourceFile, JSON.stringify(mergedContent, null, 2));
-    console.log(`Wrote source content to ${sourceLang}.json`);
 
-    // Run Lingo.dev CLI ONCE for all missing languages
+    if (fs.existsSync(configPath)) {
+      try {
+        baseConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        // Update with our specific languages
+        baseConfig.locale = {
+          source: sourceLang,
+          targets: missingLanguages
+        };
+      } catch (e) {
+        // Use default config if parsing fails
+      }
+    }
+
+    fs.writeFileSync(path.join(tempDir, 'i18n.json'), JSON.stringify(baseConfig, null, 2));
+
+    // Write source file to temp directory
+    const sourceFile = path.join(tempI18nDir, `${sourceLang}.json`);
+    fs.writeFileSync(sourceFile, JSON.stringify(translationContent, null, 2));
+    console.log(`Wrote source content to temp directory`);
+
+    // Run Lingo.dev CLI in temp directory for all missing languages at once
     console.log(`Running Lingo.dev translation (this runs ONCE for ${missingLanguages.length} languages)...`);
-    
+
     try {
       execSync('npx lingo.dev@latest run', {
-        cwd: FRONTEND_DIR,
+        cwd: tempDir,
         stdio: 'inherit', // Show output in real-time
-        env: { 
-          ...process.env, 
-          LINGODOTDEV_API_KEY: lingoApiKey || process.env.LINGODOTDEV_API_KEY 
+        env: {
+          ...process.env,
+          LINGODOTDEV_API_KEY: lingoApiKey || process.env.LINGODOTDEV_API_KEY
         }
       });
-      
+
+      // Read all translated languages from temp directory
+      const newTranslations = {};
+      for (const lang of missingLanguages) {
+        const targetFile = path.join(tempI18nDir, `${lang}.json`);
+        if (fs.existsSync(targetFile)) {
+          try {
+            newTranslations[lang] = JSON.parse(fs.readFileSync(targetFile, 'utf8'));
+            console.log(`✅ Translated to ${lang}`);
+          } catch (parseError) {
+            console.error(`❌ Failed to parse translation for ${lang}:`, parseError.message);
+          }
+        } else {
+          console.error(`❌ Translation file not found for ${lang}`);
+        }
+      }
+
+      // Merge with existing translations
+      const allTranslations = mergeTranslations(existingTranslations, newTranslations);
+
+      // OPTIMIZATION 3: Cache the complete result
+      await setCachedTranslation(cacheKey, allTranslations, actualTargets);
+
+      console.log(`💾 Cached ${Object.keys(allTranslations).length} translations for ${sourceHost} (key: ${cacheKey.substring(0, 12)}...)`);
+      console.log(`[*] All translations complete (${missingLanguages.length} new, ${Object.keys(existingTranslations).length} cached)`);
+
+      return allTranslations;
+
     } catch (execError) {
       console.error(`❌ Lingo CLI execution failed: ${execError.message}`);
-      
+
       // Check if this is an authentication error
       const fullError = `${execError.message} ${execError.stderr || ''}`;
       if (fullError.includes('Authentication failed') || fullError.includes('unauthorized')) {
         throw new Error('Invalid Lingo.dev API key. Please check your API key and try again.');
       }
-      
-      throw execError;
-    }
 
-    // Read all newly translated files
-    const newTranslations = {};
-    for (const targetLang of missingLanguages) {
-      const targetFile = path.join(I18N_DIR, `${targetLang}.json`);
-      
-      if (fs.existsSync(targetFile)) {
-        const translated = JSON.parse(fs.readFileSync(targetFile, 'utf8'));
-        newTranslations[targetLang] = translated;
-        console.log(`Translation to ${targetLang} completed`);
-      } else {
-        console.warn(`Translation file for ${targetLang} not found`);
-        newTranslations[targetLang] = {
-          ...translationContent,
-          _error: `Translation file not generated`
-        };
+      throw execError;
+    } finally {
+      // Clean up temp directory
+      try {
+        if (fs.existsSync(tempDir)) {
+          fs.rmSync(tempDir, { recursive: true, force: true });
+        }
+      } catch (cleanupError) {
+        console.warn(`Failed to cleanup temp directory: ${cleanupError.message}`);
       }
     }
-
-    // Merge with existing translations
-    const allTranslations = mergeTranslations(existingTranslations, newTranslations);
-
-    // OPTIMIZATION 3: Cache the complete result
-    setCachedTranslation(cacheKey, allTranslations, actualTargets);
 
     console.log(`[*] All translations complete (${missingLanguages.length} new, ${Object.keys(existingTranslations).length} cached)`);
     

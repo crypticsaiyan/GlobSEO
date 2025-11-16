@@ -40,15 +40,40 @@ app.use((req, res, next) => {
 });
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    message: 'GlobSEO API is running',
-    apiKeys: {
-      gemini: !!process.env.GEMINI_API_KEY,
-      lingo: !!process.env.LINGODOTDEV_API_KEY
-    }
-  });
+app.get('/api/health', async (req, res) => {
+  try {
+    const cacheStats = await getCacheStats();
+    res.json({ 
+      status: 'ok', 
+      message: 'GlobSEO API is running',
+      timestamp: new Date().toISOString(),
+      apiKeys: {
+        gemini: !!process.env.GEMINI_API_KEY,
+        lingo: !!process.env.LINGODOTDEV_API_KEY
+      },
+      cache: {
+        type: cacheStats.cacheType,
+        connected: cacheStats.redisConnected,
+        entries: cacheStats.totalEntries,
+        size: cacheStats.cacheSize
+      }
+    });
+  } catch (error) {
+    res.json({ 
+      status: 'ok', 
+      message: 'GlobSEO API is running',
+      timestamp: new Date().toISOString(),
+      apiKeys: {
+        gemini: !!process.env.GEMINI_API_KEY,
+        lingo: !!process.env.LINGODOTDEV_API_KEY
+      },
+      cache: {
+        type: 'error',
+        connected: false,
+        error: error.message
+      }
+    });
+  }
 });
 
 /**
@@ -126,10 +151,19 @@ app.post('/api/translate', strictRateLimiter, async (req, res) => {
 
     // Step 2: Translate metadata
     console.log('[SYNC] Step 2: Starting translations...');
+    console.log(`🌐 Source URL: ${url}`);
+    console.log(`📄 Page title: "${metadata.title?.substring(0, 50)}..."`);
+    console.log(`🏷️  Page description: "${metadata.description?.substring(0, 50)}..."`);
     const startTime = Date.now();
     const translations = await processMetadataTranslations(metadata, languages, lingoApiKey);
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log(`[OK] All translations complete in ${duration}s`);
+
+    // Log translation results
+    console.log(`📊 Translation results:`);
+    Object.entries(translations).forEach(([lang, data]) => {
+      console.log(`  ${lang}: "${data?.meta?.title?.substring(0, 40)}..."`);
+    });
 
     // Step 3: Save results
     const result = {
@@ -384,6 +418,50 @@ app.post('/api/scrape-translate-score', strictRateLimiter, async (req, res) => {
       error: 'Failed to complete pipeline',
       message: error.message,
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+/**
+ * GET /api/cache/stats
+ * Get cache statistics
+ */
+app.get('/api/cache/stats', async (req, res) => {
+  try {
+    const stats = await getCacheStats();
+    res.json({
+      success: true,
+      cache: stats,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Cache stats error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get cache stats',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/cache
+ * Clear all cache entries
+ */
+app.delete('/api/cache', async (req, res) => {
+  try {
+    await clearCache();
+    res.json({
+      success: true,
+      message: 'Cache cleared successfully',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Cache clear error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to clear cache',
+      message: error.message
     });
   }
 });
