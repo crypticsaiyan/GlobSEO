@@ -177,6 +177,8 @@ Configuration is managed through `backend/config.json`:
 - `output.updateI18n`: Whether to update frontend i18n files with translations
 - `output.i18nDirectory`: Path to frontend i18n directory
 - `metadata.fieldsToTranslate`: Which metadata fields to translate
+- `logging.colors`: ANSI color codes for console output
+- `logging.levels`: Log level to color mapping for consistent logging
 
 ### Environment Variables
 
@@ -198,6 +200,7 @@ Optional:
 - **Scraping**: Cheerio for HTML parsing, Axios for HTTP requests
 - **Caching**: Redis for high-performance caching with in-memory fallback
 - **Rate Limiting**: Express rate limiting middleware
+- **Logging**: Centralized ANSI color-coded logging system
 - **Development**: ESLint, PostCSS, Autoprefixer, TypeScript
 
 ## Project Structure
