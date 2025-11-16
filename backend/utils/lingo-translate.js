@@ -109,7 +109,7 @@ async function translateWithLingo(content, sourceLang, targetLang, lingoApiKey) 
     // Run Lingo.dev CLI in temp directory
     try {
       await new Promise((resolve, reject) => {
-        exec('npx lingo.dev@latest run', {
+        exec('npx lingo.dev run', {
           stdio: 'inherit',
           cwd: tempDir,
           env: {
@@ -308,7 +308,7 @@ async function processMetadataTranslations(metadata, targetLanguages, lingoApiKe
 
     try {
       await new Promise((resolve, reject) => {
-        exec('npx lingo.dev@latest run', {
+        exec('npx lingo.dev run', {
           cwd: tempDir,
           stdio: 'inherit', // Show output in real-time
           env: {
