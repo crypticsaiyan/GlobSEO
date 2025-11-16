@@ -5,12 +5,10 @@
  * This script integrates with the frontend to translate scraped metadata
  */
 
-import { exec } from 'child_process';
+// exec removed; we use the Lingo SDK
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import crypto from 'crypto';
-import os from 'os';
 import {
   getCacheKey,
   getCachedTranslation,
@@ -18,6 +16,9 @@ import {
   getMissingLanguages,
   mergeTranslations
 } from './cache-utils.js';
+
+// Lingo SDK
+import { LingoDotDevEngine } from 'lingo.dev/sdk';
 
 import { log, colors } from './logger.js';
 
@@ -67,95 +68,27 @@ function setupI18nConfig(sourceLang, targetLangs) {
  * @returns {Promise<Object>} - Translated content
  */
 async function translateWithLingo(content, sourceLang, targetLang, lingoApiKey) {
-  // Create a unique temporary directory for this translation request
-  const tempDir = path.join(os.tmpdir(), `lingo-translate-${crypto.randomBytes(8).toString('hex')}`);
-  const tempI18nDir = path.join(tempDir, 'i18n');
+  // No temp files required; SDK operates in-process
 
   try {
-    // Ensure temp directory exists
-    fs.mkdirSync(tempI18nDir, { recursive: true });
-
-    // Copy the i18n.json config to temp directory
-    const configPath = path.join(FRONTEND_DIR, 'i18n.json');
-    if (fs.existsSync(configPath)) {
-      fs.copyFileSync(configPath, path.join(tempDir, 'i18n.json'));
-    }
-
-    // Ensure source locale file exists with content
-    const sourceFile = path.join(tempI18nDir, `${sourceLang}.json`);
-
-    // Write source content to temp file
-    fs.writeFileSync(sourceFile, JSON.stringify(content, null, 2));
-
-    log.info(`Translating from ${sourceLang} to ${targetLang}...`);
-
-    // Setup i18n.json config in temp directory
-    const i18nConfigPath = path.join(tempDir, 'i18n.json');
-    const config = {
-      "$schema": "https://lingo.dev/schema/i18n.json",
-      "version": "1.10",
-      "locale": {
-        "source": sourceLang,
-        "targets": [targetLang]
-      },
-      "buckets": {
-        "json": {
-          "include": ["i18n/[locale].json"]
-        }
-      }
-    };
-    fs.writeFileSync(i18nConfigPath, JSON.stringify(config, null, 2));
-
-    // Run Lingo.dev CLI in temp directory
+    // Use the Lingo SDK for translation (avoid CLI and temp files)
     try {
-      await new Promise((resolve, reject) => {
-        exec('npx lingo.dev run', {
-          stdio: 'inherit',
-          cwd: tempDir,
-          env: {
-            ...process.env,
-            LINGODOTDEV_API_KEY: lingoApiKey || process.env.LINGODOTDEV_API_KEY
-          }
-        }, (error, stdout, stderr) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolve({ stdout, stderr });
-          }
-        });
-      });
-
-      // Read translated content
-      const targetFile = path.join(tempI18nDir, `${targetLang}.json`);
-      if (fs.existsSync(targetFile)) {
-        const translated = JSON.parse(fs.readFileSync(targetFile, 'utf8'));
-        return translated;
-      } else {
-        throw new Error('Translation output file not found');
-      }
-    } catch (execError) {
-      console.error(`[ERROR] Lingo CLI command failed: ${execError.message}`);
-
-      // Check if this is an authentication error
-      const fullError = `${execError.message} ${execError.stderr || ''}`;
-      if (fullError.includes('Authentication failed') || fullError.includes('unauthorized')) {
+      const engine = new LingoDotDevEngine({ apiKey: lingoApiKey || process.env.LINGODOTDEV_API_KEY });
+      log.info(`Translating from ${sourceLang} to ${targetLang} (SDK)`);
+      const translated = await engine.localizeObject(content, { sourceLocale: sourceLang, targetLocale: targetLang });
+      return translated;
+    } catch (sdkError) {
+      // Map familiar error messages
+      const msg = sdkError?.message || String(sdkError);
+      if (msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('api key')) {
         throw new Error('Invalid Lingo.dev API key. Please check your API key and try again.');
       }
-
-      throw execError;
+      // Re-throw original error for visibility
+      throw sdkError;
     }
   } catch (error) {
     console.error(`[ERROR] Translation failed: ${error.message}`);
     throw error;
-  } finally {
-    // Clean up temp directory
-    try {
-      if (fs.existsSync(tempDir)) {
-        fs.rmSync(tempDir, { recursive: true, force: true });
-      }
-    } catch (cleanupError) {
-      console.warn(`Failed to cleanup temp directory: ${cleanupError.message}`);
-    }
   }
 }
 
@@ -260,120 +193,56 @@ async function processMetadataTranslations(metadata, targetLanguages, lingoApiKe
   log.info(`Need to translate ${missingLanguages.length}/${actualTargets.length} languages: ${missingLanguages.join(', ')}`);
 
   try {
-    // Create a unique temporary directory for this translation request
-    const tempDir = path.join(os.tmpdir(), `lingo-translate-${crypto.randomBytes(8).toString('hex')}`);
-    const tempI18nDir = path.join(tempDir, 'i18n');
+    // Use the Lingo SDK to perform translations (batch per language) and avoid child processes.
+    const engine = new LingoDotDevEngine({
+      apiKey: lingoApiKey || process.env.LINGODOTDEV_API_KEY,
+      // Optional tuning
+      batchSize: parseInt(process.env.LINGO_BATCH_SIZE || '100', 10),
+      idealBatchItemSize: parseInt(process.env.LINGO_IDEAL_BATCH_ITEM_SIZE || '1000', 10)
+    });
 
-    // Ensure temp directory exists
-    fs.mkdirSync(tempI18nDir, { recursive: true });
+    // Concurrency limit to avoid hitting rate limits
+    const concurrency = Math.max(1, parseInt(process.env.LINGO_CONCURRENCY || '3', 10));
 
-    // Copy the i18n.json config to temp directory and modify for multiple languages
-    const configPath = path.join(FRONTEND_DIR, 'i18n.json');
-    let baseConfig = {
-      "$schema": "https://lingo.dev/schema/i18n.json",
-      "version": "1.10",
-      "locale": {
-        "source": sourceLang,
-        "targets": missingLanguages
-      },
-      "buckets": {
-        "json": {
-          "include": ["i18n/[locale].json"]
-        }
-      }
-    };
-
-    if (fs.existsSync(configPath)) {
-      try {
-        baseConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-        // Update with our specific languages
-        baseConfig.locale = {
-          source: sourceLang,
-          targets: missingLanguages
-        };
-      } catch (e) {
-        // Use default config if parsing fails
-      }
-    }
-
-    fs.writeFileSync(path.join(tempDir, 'i18n.json'), JSON.stringify(baseConfig, null, 2));
-
-    // Write source file to temp directory
-    const sourceFile = path.join(tempI18nDir, `${sourceLang}.json`);
-    fs.writeFileSync(sourceFile, JSON.stringify(translationContent, null, 2));
-    log.debug(`Wrote source content to temp directory`);
-
-    // Run Lingo.dev CLI in temp directory for all missing languages at once
-    log.info(`Running Lingo.dev translation (this runs ONCE for ${missingLanguages.length} languages)...`);
-
-    try {
-      await new Promise((resolve, reject) => {
-        exec('npx lingo.dev run', {
-          cwd: tempDir,
-          stdio: 'inherit', // Show output in real-time
-          env: {
-            ...process.env,
-            LINGODOTDEV_API_KEY: lingoApiKey || process.env.LINGODOTDEV_API_KEY
-          }
-        }, (error, stdout, stderr) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolve({ stdout, stderr });
-          }
-        });
-      });
-
-      // Read all translated languages from temp directory
-      const newTranslations = {};
-      for (const lang of missingLanguages) {
-        const targetFile = path.join(tempI18nDir, `${lang}.json`);
-        if (fs.existsSync(targetFile)) {
+    // Small concurrency runner
+    async function runWithConcurrency(items, limit, handler) {
+      const results = {};
+      let idx = 0;
+      const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+        while (idx < items.length) {
+          const i = idx++;
+          const item = items[i];
           try {
-            newTranslations[lang] = JSON.parse(fs.readFileSync(targetFile, 'utf8'));
-            log.success(`Translated to ${lang}`);
-          } catch (parseError) {
-            log.error(`Failed to parse translation for ${lang}: ${parseError.message}`);
+            results[item] = await handler(item);
+          } catch (e) {
+            results[item] = { ...translationContent, _error: e.message || String(e) };
           }
-        } else {
-          log.error(`Translation file not found for ${lang}`);
         }
-      }
-
-      // Merge with existing translations
-      const allTranslations = mergeTranslations(existingTranslations, newTranslations);
-
-      // OPTIMIZATION 3: Cache the complete result
-      await setCachedTranslation(cacheKey, allTranslations, actualTargets);
-
-      log.cache(`SET ${Object.keys(allTranslations).length} translations for ${sourceHost} (key: ${cacheKey.substring(0, 12)}...)`);
-      log.success(`All translations complete (${missingLanguages.length} new, ${Object.keys(existingTranslations).length} cached)`);
-
-      return allTranslations;
-
-    } catch (execError) {
-      console.error(`❌ Lingo CLI execution failed: ${execError.message}`);
-
-      // Check if this is an authentication error
-      const fullError = `${execError.message} ${execError.stderr || ''}`;
-      if (fullError.includes('Authentication failed') || fullError.includes('unauthorized')) {
-        throw new Error('Invalid Lingo.dev API key. Please check your API key and try again.');
-      }
-
-      throw execError;
-    } finally {
-      // Clean up temp directory
-      try {
-        if (fs.existsSync(tempDir)) {
-          fs.rmSync(tempDir, { recursive: true, force: true });
-        }
-      } catch (cleanupError) {
-        console.warn(`Failed to cleanup temp directory: ${cleanupError.message}`);
-      }
+      });
+      await Promise.all(workers);
+      return results;
     }
 
+    log.info(`Running Lingo.dev SDK translation for ${missingLanguages.length} languages...`);
+    const newTranslations = await runWithConcurrency(missingLanguages, concurrency, async (lang) => {
+      try {
+        const localized = await engine.localizeObject(translationContent, { sourceLocale: sourceLang, targetLocale: lang });
+        log.success(`Translated to ${lang}`);
+        return localized;
+      } catch (err) {
+        const msg = err?.message || String(err);
+        if (msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('api key')) {
+          throw new Error('Invalid Lingo.dev API key. Please check your API key and try again.');
+        }
+        throw err;
+      }
+    });
+
+    // Merge and cache
+    const allTranslations = mergeTranslations(existingTranslations, newTranslations);
+    await setCachedTranslation(cacheKey, allTranslations, actualTargets);
+    log.cache(`SET ${Object.keys(allTranslations).length} translations for ${sourceHost} (key: ${cacheKey.substring(0, 12)}...)`);
     log.success(`All translations complete (${missingLanguages.length} new, ${Object.keys(existingTranslations).length} cached)`);
-    
     return allTranslations;
     
   } catch (error) {
