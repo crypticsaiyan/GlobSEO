@@ -1,11 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * Frontend Translation Script using Lingo.dev CLI
+ * Frontend Translation Script using Lingo.dev SDK
  * This script integrates with the frontend to translate scraped metadata
  */
-
-// exec removed; we use the Lingo SDK
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -31,7 +29,7 @@ const I18N_DIR = path.join(FRONTEND_DIR, 'i18n');
 
 
 /**
- * Setup i18n.json configuration for Lingo.dev CLI
+ * Setup i18n.json configuration for Lingo.dev SDK
  * @param {string} sourceLang - Source language code
  * @param {Array<string>} targetLangs - Target language codes (ONLY these will be translated)
  */
@@ -61,7 +59,7 @@ function setupI18nConfig(sourceLang, targetLangs) {
 }
 
 /**
- * Translate content using lingo.dev CLI
+ * Translate content using the Lingo.dev SDK
  * @param {Object} content - Content to translate
  * @param {string} sourceLang - Source language code
  * @param {string} targetLang - Target language code

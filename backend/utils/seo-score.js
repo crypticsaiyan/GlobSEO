@@ -339,7 +339,7 @@ function generateFallbackScore({ url, title, description, keywords, ogTags }) {
 }
 
 /**
- * CLI usage example
+ * Usage example
  */
 if (import.meta.url === `file://${process.argv[1]}`) {
   const testData = {

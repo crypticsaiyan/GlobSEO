@@ -216,7 +216,7 @@ export async function scrapeAndScore(url, options = {}) {
   };
 }
 
-// CLI usage
+// Command-line usage (script entrypoint)
 if (import.meta.url === `file://${process.argv[1]}`) {
   const args = process.argv.slice(2);
   

@@ -2,7 +2,7 @@
 
 ![GlobSEO](./assets/screenshots/hero.png)
 
-GlobSEO analyzes website metadata, translates it to multiple languages using [Lingo.dev](https://lingo.dev) CLI, and provides SEO scoring to help optimize content for global audiences. Whether you need English-only analysis or full multilingual SEO optimization, GlobSEO delivers professional-grade results with intelligent caching and comprehensive API support.
+GlobSEO analyzes website metadata, translates it to multiple languages using the [Lingo.dev](https://lingo.dev) SDK, and provides SEO scoring to help optimize content for global audiences. Whether you need English-only analysis or full multilingual SEO optimization, GlobSEO delivers professional-grade results with intelligent caching and comprehensive API support.
 
 ## Features
 
@@ -219,7 +219,7 @@ Optional:
 - **Web Scraping**: Playwright (headless browser automation)
 - **HTML Parsing**: Cheerio
 - **AI Integration**: Google Generative AI (Gemini) for SEO analysis
-- **Translation Service**: Lingo.dev CLI for professional translations
+- **Translation Service**: Lingo.dev SDK for professional translations
 - **Caching**: Upstash Redis (with in-memory fallback)
 - **Rate Limiting**: Express rate limiting middleware
 - **HTTP Client**: Axios

@@ -121,10 +121,13 @@
 │  │ │ 3. Write source content                            │     │         │
 │  │ │    • frontend/i18n/en.json = translationContent    │     │         │
 │  │ │                                                    │     │         │
-│  │ │ 4. Run Lingo.dev CLI                               │     │         │
-│  │ │    • npx lingo.dev@latest run                      │     │         │
-│  │ │    • Runs in frontend/ directory                   │     │         │
-│  │ │    • Generates frontend/i18n/es.json, fr.json      │     │         │
+│  │ │ 4. Perform translations via Lingo.dev SDK          │     │         │
+│  │ │     (in-process)                                   │     │         │
+│  │ │    • Uses the in-process SDK to localize the       │     │         │
+│  │ │            prepared object                         │     │         │
+│  │ │    • No external `npx`/CLI calls required          │     │         │
+│  │ │    • Generates translation results which are       │     │         │
+│  │ │            written to frontend/i18n/*.json         │     │         │
 │  │ │                                                    │     │         │
 │  │ │ 5. Read translated files                           │     │         │
 │  │ │    • Parse JSON from each target language file     │     │         │
