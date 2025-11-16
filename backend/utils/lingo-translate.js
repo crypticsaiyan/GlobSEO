@@ -19,6 +19,29 @@ import {
   mergeTranslations
 } from './cache-utils.js';
 
+// ANSI color codes for professional logging
+const colors = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  dim: '\x1b[2m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m',
+  white: '\x1b[37m'
+};
+
+const log = {
+  info: (msg) => console.log(`${colors.blue}[INFO]${colors.reset} ${msg}`),
+  success: (msg) => console.log(`${colors.green}[SUCCESS]${colors.reset} ${msg}`),
+  warning: (msg) => console.log(`${colors.yellow}[WARNING]${colors.reset} ${msg}`),
+  error: (msg) => console.log(`${colors.red}[ERROR]${colors.reset} ${msg}`),
+  cache: (msg) => console.log(`${colors.cyan}[CACHE]${colors.reset} ${msg}`),
+  debug: (msg) => console.log(`${colors.dim}[DEBUG]${colors.reset} ${msg}`)
+};
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -52,7 +75,7 @@ function setupI18nConfig(sourceLang, targetLangs) {
   
   // Write the config (overwrites existing)
   fs.writeFileSync(i18nConfigPath, JSON.stringify(config, null, 2));
-  console.log(`[NOTE] Updated i18n.json with targets: ${targetLangs.join(', ')}`);
+  log.info(`Updated i18n.json with targets: ${targetLangs.join(', ')}`);
   
   return config;
 }
@@ -85,7 +108,7 @@ async function translateWithLingo(content, sourceLang, targetLang, lingoApiKey) 
     // Write source content to temp file
     fs.writeFileSync(sourceFile, JSON.stringify(content, null, 2));
 
-    console.log(`Translating from ${sourceLang} to ${targetLang}...`);
+    log.info(`Translating from ${sourceLang} to ${targetLang}...`);
 
     // Setup i18n.json config in temp directory
     const i18nConfigPath = path.join(tempDir, 'i18n.json');
@@ -164,7 +187,7 @@ async function processMetadataTranslations(metadata, targetLanguages, lingoApiKe
   const actualTargets = targetLanguages.filter(lang => lang !== sourceLang);
   
   if (actualTargets.length === 0) {
-    console.log('No translations needed (all languages same as source)');
+    log.info('No translations needed (all languages same as source)');
     return translations;
   }
 
@@ -213,16 +236,16 @@ async function processMetadataTranslations(metadata, targetLanguages, lingoApiKe
 
   // OPTIMIZATION 1: Check cache first
   const cacheKey = getCacheKey(translationContent, sourceLang, actualTargets);
-  console.log(`🔍 Cache key for ${sourceHost}: ${cacheKey.substring(0, 12)}...`);
-  console.log(`📝 Translation content title: "${translationContent.meta.title?.substring(0, 50)}..."`);
+  log.debug(`Cache key for ${sourceHost}: ${cacheKey.substring(0, 12)}...`);
+  log.debug(`Translation content title: "${translationContent.meta.title?.substring(0, 50)}..."`);
   const cachedTranslations = await getCachedTranslation(cacheKey);
 
   if (cachedTranslations) {
-    console.log(`✅ Cache HIT for ${sourceHost} - found ${Object.keys(cachedTranslations).length} translations`);
+    log.cache(`HIT for ${sourceHost} - found ${Object.keys(cachedTranslations).length} translations`);
     return cachedTranslations;
   }
 
-  console.log(`❌ Cache MISS for ${sourceHost} - will translate ${actualTargets.length} languages`);
+  log.cache(`MISS for ${sourceHost} - will translate ${actualTargets.length} languages`);
 
   // OPTIMIZATION 2: Check for partial translations (incremental)
   let existingTranslations = {};
@@ -234,7 +257,7 @@ async function processMetadataTranslations(metadata, targetLanguages, lingoApiKe
     
     if (subsetCache) {
       existingTranslations = mergeTranslations(existingTranslations, subsetCache);
-      console.log(`* Found partial cache for: ${subset.join(', ')}`);
+      log.cache(`Found partial cache for: ${subset.join(', ')}`);
     }
   }
 
@@ -242,12 +265,12 @@ async function processMetadataTranslations(metadata, targetLanguages, lingoApiKe
   const missingLanguages = getMissingLanguages(existingTranslations, actualTargets);
   
   if (missingLanguages.length === 0) {
-    console.log('** All languages found in cache!');
+    log.success('All languages found in cache!');
     await setCachedTranslation(cacheKey, existingTranslations, actualTargets);
     return existingTranslations;
   }
 
-  console.log(`Need to translate ${missingLanguages.length}/${actualTargets.length} languages: ${missingLanguages.join(', ')}`);
+  log.info(`Need to translate ${missingLanguages.length}/${actualTargets.length} languages: ${missingLanguages.join(', ')}`);
 
   try {
     // Create a unique temporary directory for this translation request
@@ -291,10 +314,10 @@ async function processMetadataTranslations(metadata, targetLanguages, lingoApiKe
     // Write source file to temp directory
     const sourceFile = path.join(tempI18nDir, `${sourceLang}.json`);
     fs.writeFileSync(sourceFile, JSON.stringify(translationContent, null, 2));
-    console.log(`Wrote source content to temp directory`);
+    log.debug(`Wrote source content to temp directory`);
 
     // Run Lingo.dev CLI in temp directory for all missing languages at once
-    console.log(`Running Lingo.dev translation (this runs ONCE for ${missingLanguages.length} languages)...`);
+    log.info(`Running Lingo.dev translation (this runs ONCE for ${missingLanguages.length} languages)...`);
 
     try {
       execSync('npx lingo.dev@latest run', {
@@ -313,12 +336,12 @@ async function processMetadataTranslations(metadata, targetLanguages, lingoApiKe
         if (fs.existsSync(targetFile)) {
           try {
             newTranslations[lang] = JSON.parse(fs.readFileSync(targetFile, 'utf8'));
-            console.log(`✅ Translated to ${lang}`);
+            log.success(`Translated to ${lang}`);
           } catch (parseError) {
-            console.error(`❌ Failed to parse translation for ${lang}:`, parseError.message);
+            log.error(`Failed to parse translation for ${lang}: ${parseError.message}`);
           }
         } else {
-          console.error(`❌ Translation file not found for ${lang}`);
+          log.error(`Translation file not found for ${lang}`);
         }
       }
 
@@ -328,8 +351,8 @@ async function processMetadataTranslations(metadata, targetLanguages, lingoApiKe
       // OPTIMIZATION 3: Cache the complete result
       await setCachedTranslation(cacheKey, allTranslations, actualTargets);
 
-      console.log(`💾 Cached ${Object.keys(allTranslations).length} translations for ${sourceHost} (key: ${cacheKey.substring(0, 12)}...)`);
-      console.log(`[*] All translations complete (${missingLanguages.length} new, ${Object.keys(existingTranslations).length} cached)`);
+      log.cache(`SET ${Object.keys(allTranslations).length} translations for ${sourceHost} (key: ${cacheKey.substring(0, 12)}...)`);
+      log.success(`All translations complete (${missingLanguages.length} new, ${Object.keys(existingTranslations).length} cached)`);
 
       return allTranslations;
 
@@ -354,7 +377,7 @@ async function processMetadataTranslations(metadata, targetLanguages, lingoApiKe
       }
     }
 
-    console.log(`[*] All translations complete (${missingLanguages.length} new, ${Object.keys(existingTranslations).length} cached)`);
+    log.success(`All translations complete (${missingLanguages.length} new, ${Object.keys(existingTranslations).length} cached)`);
     
     return allTranslations;
     
@@ -444,7 +467,7 @@ function updateI18nFiles(translations) {
     };
 
     fs.writeFileSync(i18nFile, JSON.stringify(updatedContent, null, 2));
-    console.log(`[SAVE] Updated ${lang}.json`);
+    log.info(`Updated ${lang}.json`);
   }
 }
 
@@ -471,7 +494,7 @@ async function main() {
   try {
     // Read metadata
     const metadata = JSON.parse(fs.readFileSync(metadataFile, 'utf8'));
-    console.log(`* Loaded metadata from ${metadataFile}`);
+    log.info(`Loaded metadata from ${metadataFile}`);
 
     // Process translations
     const translations = await processMetadataTranslations(
@@ -491,8 +514,8 @@ async function main() {
     }, null, 2));
 
     console.log(`\n✨ Translation complete!`);
-    console.log(`[*] Results saved to: ${outputFile}`);
-    console.log(`[*] Updated languages: ${targetLanguages.join(', ')}`);
+    log.success(`Results saved to: ${outputFile}`);
+    log.info(`Updated languages: ${targetLanguages.join(', ')}`);
   } catch (error) {
     console.error(`[ERROR] Error: ${error.message}`);
     console.error(error.stack);

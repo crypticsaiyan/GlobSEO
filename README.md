@@ -2,16 +2,25 @@
 
 ![GlobSEO](./assets/screenshots/hero.png)
 
-GlobSEO analyzes website metadata, translates it to multiple languages, and provides SEO scoring to help optimize content for global audiences.
+GlobSEO analyzes website metadata, translates it to multiple languages (optional), and provides SEO scoring to help optimize content for global audiences. Whether you need English-only analysis or full multilingual SEO optimization, GlobSEO delivers professional-grade results with intelligent caching and comprehensive API support.
 
 ## Features
 
 - **Metadata Extraction**: Scrapes title, description, keywords, Open Graph tags, and Twitter Card data from web pages
-- **Multi-language Translation**: Translates metadata using Lingo.dev's translation service
-- **SEO Analysis**: Generates detailed SEO scores and recommendations using Google Gemini AI
-- **Caching System**: Optimizes performance by caching translation results
+- **Multi-language Translation**: Translates metadata using Lingo.dev's translation service (optional)
+- **Supported Languages**: 15+ languages including Spanish, French, German, Italian, Portuguese, Japanese, Korean, Chinese, Arabic, Russian, Dutch, Polish, Turkish, Swedish, and Danish
+- **Smart Rewrite Suggestions**: AI-powered content improvement recommendations
+- **Schema Markup Generation**: Automatic generation of structured data markup
+- **Social Card Previews**: Live previews of how content appears on social media platforms
+- **Code Generation**: Ready-to-use HTML meta tags, JSON-LD, and social media cards
+- **Metadata Quality Scoring**: Comprehensive analysis of title, description, and keyword optimization
+- **Caching System**: Optimizes performance by caching translation results with Redis
+- **Rate Limiting**: Built-in rate limiting to prevent abuse
 - **i18n Integration**: Can update frontend internationalization files with translated content
-- **Web Interface**: Clean React-based UI for easy interaction
+- **Modern UI**: Built with React 19, TypeScript, and Tailwind CSS using Radix UI components
+- **Responsive Design**: Optimized for desktop and mobile devices
+- **Dark Theme**: Modern dark theme with professional aesthetics
+- **REST API**: Comprehensive API for integration with other tools
 
 ## Installation
 
@@ -37,11 +46,14 @@ GlobSEO analyzes website metadata, translates it to multiple languages, and prov
    npm run install-browsers
    ```
 
-4. Create a `.env` file with required API keys:
+4. Copy the environment variables file and configure your API keys:
+   ```bash
+   cp .env.example .env
    ```
-   GEMINI_API_KEY=your_gemini_api_key_here
-   LINGODOTDEV_API_KEY=your_lingodotdev_api_key_here
-   ```
+   
+   Then edit `.env` with your actual API keys:
+   - `GEMINI_API_KEY`: Your Google Gemini API key for SEO analysis
+   - `LINGODOTDEV_API_KEY`: Your Lingo.dev API key for translations
 
 ### Frontend Setup
 
@@ -76,87 +88,215 @@ GlobSEO analyzes website metadata, translates it to multiple languages, and prov
 ### Basic Workflow
 
 1. Enter a website URL in the input field
-2. Select target languages for translation
+2. Select target languages for translation (optional - English-only analysis available)
 3. Click "Analyze" to start the process
-4. View the results showing original metadata, translations, and SEO scores
+4. View the results showing original metadata, SEO scores, and translations (if requested)
 
 ### API Usage
 
-The backend provides a REST API endpoint:
+The backend provides multiple REST API endpoints for different use cases:
 
+#### Complete Pipeline (Scrape + Translate + Score)
 ```bash
 curl -X POST http://localhost:3001/api/scrape-translate-score \
   -H "Content-Type: application/json" \
   -d '{
     "url": "https://example.com",
-    "languages": ["es", "fr", "de"]
+    "languages": ["es", "fr", "de"],
+    "primaryKeyword": "example keyword"
   }'
 ```
 
-### Testing
-
-Run the integration test script:
-
+#### Scrape and Score Only (English)
 ```bash
-./test-translation-integration.sh
+curl -X POST http://localhost:3001/api/scrape-and-score \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com",
+    "primaryKeyword": "example keyword"
+  }'
 ```
+
+#### Individual Operations
+```bash
+# Scrape metadata only
+curl -X POST http://localhost:3001/api/scrape \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com"}'
+
+# Scrape and translate only
+curl -X POST http://localhost:3001/api/translate \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com", "languages": ["es", "fr"]}'
+
+# Generate SEO score for existing metadata
+curl -X POST http://localhost:3001/api/seo-score \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com", "title": "Page Title", "description": "Page description"}'
+```
+
+#### Health Check
+```bash
+curl http://localhost:3001/api/health
+```
+
+### Testing
 
 Run backend tests:
 
 ```bash
 cd backend
-npm test
+node tests/test-seo-score.js
+node tests/test-lingo-translate.js
+node tests/test-optimizations.js
 ```
 
-## Configuration
+### Integration Testing
+
+Run individual backend tests for specific functionality:
+
+```bash
+cd backend
+node tests/test-seo-score.js
+node tests/test-lingo-translate.js
+node tests/test-optimizations.js
+```
+
+For comprehensive integration testing, create a custom test script that exercises the full pipeline.
 
 Configuration is managed through `backend/config.json`:
 
-- `defaultLanguages`: Default target languages for translation
-- `supportedLanguages`: All available language codes
-- `scraper.timeout`: Timeout for web scraping operations
-- `translation.provider`: Translation service provider
-- `output.updateI18n`: Whether to update frontend i18n files
+- `defaultLanguages`: Default target languages for translation (e.g., ["es", "fr"])
+- `supportedLanguages`: All available language codes for translation
+- `scraper.timeout`: Timeout for web scraping operations (milliseconds)
+- `scraper.waitUntil`: Playwright wait condition ("domcontentloaded", "load", "networkidle")
+- `scraper.headless`: Whether to run browser in headless mode
+- `translation.provider`: Translation service provider ("lingo")
+- `translation.fallbackEnabled`: Whether to enable fallback translation methods
+- `output.directory`: Directory for saving generated metadata files
+- `output.updateI18n`: Whether to update frontend i18n files with translations
+- `output.i18nDirectory`: Path to frontend i18n directory
 - `metadata.fieldsToTranslate`: Which metadata fields to translate
 
-Environment variables:
-- `GEMINI_API_KEY`: Required for SEO analysis
+### Environment Variables
+
+Required:
+- `GEMINI_API_KEY`: Google Gemini API key for SEO analysis
+- `LINGODOTDEV_API_KEY`: Lingo.dev API key for translations
+
+Optional:
+- `PORT`: Server port (default: 3001)
+- `REDIS_URL`: Redis connection URL (default: redis://localhost:6379)
+- `CACHE_EXPIRY_SECONDS`: Cache TTL in seconds (default: 86400 - 24 hours)
+- `NODE_ENV`: Environment mode ("development", "production")
 
 ## Technologies
 
-- **Backend**: Node.js, Express.js, Playwright (scraping), Google Generative AI (SEO scoring)
-- **Frontend**: React, TypeScript, Vite, Tailwind CSS, Radix UI
+- **Backend**: Node.js, Express.js, Playwright (web scraping), Google Generative AI (SEO scoring)
+- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS, Radix UI components
 - **Translation**: Lingo.dev CLI for professional translations
-- **Caching**: File-based caching system for translation results
+- **Scraping**: Cheerio for HTML parsing, Axios for HTTP requests
+- **Caching**: Redis for high-performance caching with in-memory fallback
+- **Rate Limiting**: Express rate limiting middleware
+- **Development**: ESLint, PostCSS, Autoprefixer, TypeScript
 
 ## Project Structure
 
 ```bash
-├── backend/           # Node.js API server
-│   ├── server.js      # Main server file
-│   ├── pipeline.js    # Translation pipeline logic
-│   ├── utils/         # Utility modules
-│   │   ├── scraper.js      # Web scraping
-│   │   ├── lingo-translate.js  # Translation handling
-│   │   └── seo-score.js       # SEO analysis
-│   ├── tests/         # Backend tests
-│   └── config.json    # Configuration
-├── frontend/          # React application
-│   ├── src/           # Source code
-│   ├── i18n/          # Translation files
-│   └── package.json   # Dependencies
-└── test-translation-integration.sh  # Integration tests
+├── README.md                    # Project documentation
+├── TRANSLATION_FLOW.md          # Detailed translation pipeline documentation
+├── assets/
+│   └── screenshots/             # Application screenshots
+├── backend/                     # Node.js API server
+│   ├── server.js                # Main Express server
+│   ├── pipeline.js              # Translation pipeline logic
+│   ├── config.json              # Configuration settings
+│   ├── package.json             # Backend dependencies
+│   ├── output/                  # Generated metadata files
+│   ├── tests/                   # Backend test files
+│   │   ├── test-lingo-translate.js
+│   │   ├── test-optimizations.js
+│   │   └── test-seo-score.js
+│   └── utils/                   # Utility modules
+│       ├── scraper.js           # Web scraping functionality
+│       ├── lingo-translate.js   # Translation handling
+│       ├── seo-score.js         # SEO analysis
+│       ├── cache-utils.js       # Caching utilities
+│       └── rate-limiter.js      # Rate limiting
+├── frontend/                    # React application
+│   ├── index.html               # Main HTML file
+│   ├── package.json             # Frontend dependencies
+│   ├── vite.config.ts           # Vite configuration
+│   ├── tailwind.config.js       # Tailwind CSS config
+│   ├── postcss.config.js        # PostCSS configuration
+│   ├── tsconfig.json            # TypeScript configuration
+│   ├── eslint.config.js         # ESLint configuration
+│   ├── i18n.json                # i18n configuration
+│   ├── i18n/                    # Translation files (100+ languages)
+│   ├── public/                  # Static assets
+│   └── src/                     # Source code
+└── assets/                      # Project assets
 ```
 
 ## Development
 
-### Testing Changes
+### Available Scripts
 
-Use the provided test script to verify end-to-end functionality:
+#### Backend Scripts
+```bash
+cd backend
+
+# Development server with auto-restart
+npm run dev
+
+# Production server
+npm start
+
+# Install Playwright browsers (required for scraping)
+npm run install-browsers
+
+# Individual operations
+npm run scrape          # Scrape metadata from URL
+npm run scrape-score    # Scrape and generate SEO score
+npm run translate       # Translate existing metadata
+npm run lingo          # Run Lingo.dev translation
+npm run pipeline       # Run complete pipeline
+
+# Testing
+node tests/test-seo-score.js
+node tests/test-lingo-translate.js
+node tests/test-optimizations.js
+```
+
+#### Frontend Scripts
+```bash
+cd frontend
+
+# Development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Lint code
+npm run lint
+```
+
+### Integration Testing
+
+Run individual backend tests for specific functionality:
 
 ```bash
-./test-translation-integration.sh
+cd backend
+node tests/test-seo-score.js
+node tests/test-lingo-translate.js
+node tests/test-optimizations.js
 ```
+
+For comprehensive integration testing, create a custom test script that exercises the full pipeline.
 
 ## License
 

@@ -8,6 +8,29 @@
 import crypto from 'crypto';
 import { createClient } from 'redis';
 
+// ANSI color codes for professional logging
+const colors = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  dim: '\x1b[2m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m',
+  white: '\x1b[37m'
+};
+
+const log = {
+  info: (msg) => console.log(`${colors.blue}[INFO]${colors.reset} ${msg}`),
+  success: (msg) => console.log(`${colors.green}[SUCCESS]${colors.reset} ${msg}`),
+  warning: (msg) => console.log(`${colors.yellow}[WARNING]${colors.reset} ${msg}`),
+  error: (msg) => console.log(`${colors.red}[ERROR]${colors.reset} ${msg}`),
+  cache: (msg) => console.log(`${colors.cyan}[CACHE]${colors.reset} ${msg}`),
+  debug: (msg) => console.log(`${colors.dim}[DEBUG]${colors.reset} ${msg}`)
+};
+
 // Redis configuration
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 const CACHE_EXPIRY_SECONDS = parseInt(process.env.CACHE_EXPIRY_SECONDS) || (24 * 60 * 60); // 24 hours default
@@ -45,9 +68,9 @@ async function initializeRedis() {
       ]);
 
       await testClient.quit();
-      console.log('Redis is available, using Redis cache');
+      log.success('Redis is available, using Redis cache');
     } catch (error) {
-      console.log('Redis not available, using in-memory cache fallback');
+      log.warning('Redis not available, using in-memory cache fallback');
       useInMemoryFallback = true;
       return null;
     }
@@ -67,11 +90,11 @@ async function initializeRedis() {
     });
 
     redisClient.on('connect', () => {
-      console.log('Connected to Redis');
+      log.success('Connected to Redis');
     });
 
     redisClient.on('ready', () => {
-      console.log('Redis client ready');
+      log.success('Redis client ready');
     });
 
     await redisClient.connect();
@@ -97,7 +120,7 @@ export function getCacheKey(content, sourceLang, targetLangs) {
   const cacheString = `${sourceLang}:${sortedTargets}:${normalizedContent}`;
 
   const hash = crypto.createHash('md5').update(cacheString).digest('hex');
-  console.log(`🔑 Cache key generated: ${hash.substring(0, 12)}... for host: ${content._sourceHost || 'unknown'}`);
+  log.debug(`Cache key generated: ${hash.substring(0, 12)}... for host: ${content._sourceHost || 'unknown'}`);
   return hash;
 }
 
@@ -143,7 +166,7 @@ export async function getCachedTranslation(cacheKey) {
       return null;
     }
 
-    console.log(`Cache HIT (memory) for key: ${cacheKey.substring(0, 8)}...`);
+    log.cache(`HIT (memory) for key: ${cacheKey.substring(0, 8)}...`);
     return entry.translations;
   }
 
@@ -163,7 +186,7 @@ export async function getCachedTranslation(cacheKey) {
       return null;
     }
 
-    console.log(`Cache HIT (redis) for key: ${cacheKey.substring(0, 8)}...`);
+    log.cache(`HIT (redis) for key: ${cacheKey.substring(0, 8)}...`);
     return entry.translations;
   } catch (error) {
     console.error('Error getting cached translation:', error.message);
@@ -189,7 +212,7 @@ export async function setCachedTranslation(cacheKey, translations, targetLanguag
       created: new Date().toISOString()
     };
     memoryCache.set(cacheKey, entry);
-    console.log(`Cached translation (memory) for key: ${cacheKey.substring(0, 8)}...`);
+    log.cache(`SET (memory) for key: ${cacheKey.substring(0, 8)}...`);
     return;
   }
 
@@ -204,7 +227,7 @@ export async function setCachedTranslation(cacheKey, translations, targetLanguag
     const redisKey = getRedisKey(cacheKey);
     await client.setEx(redisKey, CACHE_EXPIRY_SECONDS, JSON.stringify(entry));
 
-    console.log(`Cached translation (redis) for key: ${cacheKey.substring(0, 8)}...`);
+    log.cache(`SET (redis) for key: ${cacheKey.substring(0, 8)}...`);
   } catch (error) {
     console.error('Error setting cached translation:', error.message);
   }
@@ -224,9 +247,9 @@ export function getMissingLanguages(existingTranslations, requestedLanguages) {
   const missing = requestedLanguages.filter(lang => !existingTranslations[lang]);
   
   if (missing.length > 0) {
-    console.log(`🔍 Missing languages: ${missing.join(', ')}`);
+    log.info(`Missing languages: ${missing.join(', ')}`);
   } else {
-    console.log(`✅ All languages already translated`);
+    log.success(`All languages already translated`);
   }
 
   return missing;
@@ -255,7 +278,7 @@ export async function cleanupCache() {
 
     // Redis handles TTL automatically, but we can scan for expired entries if needed
     // For now, just log that cleanup is handled by Redis TTL
-    console.log('Cache cleanup handled automatically by Redis TTL');
+    log.info('Cache cleanup handled automatically by Redis TTL');
   } catch (error) {
     console.error('Error during cache cleanup:', error.message);
   }
@@ -321,7 +344,7 @@ export async function clearCache() {
     if (!client || useInMemoryFallback) {
       // Clear in-memory cache
       memoryCache.clear();
-      console.log(`Cleared ${memoryCache.size} entries from in-memory cache`);
+      log.success(`Cleared ${memoryCache.size} entries from in-memory cache`);
       return;
     }
 
@@ -329,9 +352,9 @@ export async function clearCache() {
     const keys = await client.keys(`${CACHE_KEY_PREFIX}*`);
     if (keys.length > 0) {
       await client.del(keys);
-      console.log(`Cleared ${keys.length} entries from Redis cache`);
+      log.success(`Cleared ${keys.length} entries from Redis cache`);
     } else {
-      console.log('Redis cache already empty');
+      log.info('Redis cache already empty');
     }
   } catch (error) {
     console.error('Error clearing cache:', error.message);

@@ -12,6 +12,29 @@ const requestCounts = new Map();
 const WINDOW_MS = 60 * 1000; // 1 minute
 const MAX_REQUESTS = 10; // 10 requests per minute per IP
 
+// ANSI color codes for professional logging
+const colors = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  dim: '\x1b[2m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m',
+  white: '\x1b[37m'
+};
+
+const log = {
+  info: (msg) => console.log(`${colors.blue}[INFO]${colors.reset} ${msg}`),
+  success: (msg) => console.log(`${colors.green}[SUCCESS]${colors.reset} ${msg}`),
+  warning: (msg) => console.log(`${colors.yellow}[WARNING]${colors.reset} ${msg}`),
+  error: (msg) => console.log(`${colors.red}[ERROR]${colors.reset} ${msg}`),
+  cache: (msg) => console.log(`${colors.cyan}[CACHE]${colors.reset} ${msg}`),
+  debug: (msg) => console.log(`${colors.dim}[DEBUG]${colors.reset} ${msg}`)
+};
+
 /**
  * Rate limiting middleware
  */
@@ -121,6 +144,6 @@ setInterval(() => {
   }
   
   if (cleaned > 0) {
-    console.log(`* Cleaned up ${cleaned} expired rate limit records`);
+    log.info(`Cleaned up ${cleaned} expired rate limit records`);
   }
 }, 10 * 60 * 1000);

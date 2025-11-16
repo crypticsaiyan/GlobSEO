@@ -25,25 +25,41 @@
 │  2. Filter out source language (English)                                │
 │     Target languages: [es, fr]                                          │
 │                                                                         │
-│  3. Call API: api.scrapeTranslateScore(url, ['es', 'fr'])               │
-│     - Single API call handles everything                                │
-│     - Shows progress: "Scraping metadata..." → "Translating..."         │
+│  3. Conditional API call:                                               │
+│     IF targetLanguages.length > 0:                                      │
+│       - Call api.scrapeTranslateScore(url, ['es', 'fr'])                │
+│       - Shows progress: "Scraping..." → "Translating..." → "Analyzing.."│
+│     ELSE (only English selected):                                       │
+│       - Call api.scrapeAndScore(url)                                    │
+│       - Shows progress: "Scraping..." → "Analyzing..."                  │
+│                                                                         │
+│  4. Handle response and update UI                                       │
 └─────────────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                         API SERVICE (api.ts)                            │
 ├─────────────────────────────────────────────────────────────────────────┤
-│  POST /api/scrape-translate-score                                       │
-│  Body: { url, languages: ['es', 'fr'], primaryKeyword }                 │
+│  Conditional endpoint selection:                                        │
+│                                                                         │
+│  IF translations needed:                                                │
+│    POST /api/scrape-translate-score                                     │
+│    Body: { url, languages: ['es', 'fr'], primaryKeyword, lingoApiKey,   │ 
+│    geminiApiKey }                                                       │
+│                                                                         │
+│  ELSE (English only):                                                   │
+│    POST /api/scrape-and-score                                           │
+│    Body: { url, primaryKeyword, geminiApiKey }                          │
 └─────────────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                         BACKEND (server.js)                             │
 ├─────────────────────────────────────────────────────────────────────────┤
-│  POST /api/scrape-translate-score                                       │
+│  Conditional processing based on endpoint:                              │
+│                                                                         │
 │  ┌────────────────────────────────────────────────────────────┐         │
+│  │ FOR BOTH ENDPOINTS:                                        │         │
 │  │ STEP 1: SCRAPE METADATA                                    │         │
 │  │ ┌────────────────────────────────────────────────────┐     │         │
 │  │ │ scraper.js                                         │     │         │
@@ -64,6 +80,7 @@
 │  └────────────────────────────────────────────────────────────┘         │
 │                                                                         │
 │  ┌────────────────────────────────────────────────────────────┐         │
+│  │ IF /api/scrape-translate-score (with languages):           │         │
 │  │ STEP 2: TRANSLATE METADATA (OPTIMIZED)                     │         │
 │  │ ┌────────────────────────────────────────────────────┐     │         │
 │  │ │ lingo-translate.js                                 │     │         │
@@ -127,7 +144,8 @@
 │  └────────────────────────────────────────────────────────────┘         │
 │                                                                         │
 │  ┌────────────────────────────────────────────────────────────┐         │
-│  │ STEP 3: GENERATE SEO SCORE                                 │         │
+│  │ FOR BOTH ENDPOINTS:                                        │         │
+│  │ STEP 2/3: GENERATE SEO SCORE                               │         │
 │  │ ┌────────────────────────────────────────────────────┐     │         │
 │  │ │ seo-score.js                                       │     │         │
 │  │ │ • Analyze original metadata                        │     │         │
@@ -146,7 +164,8 @@
 │  └────────────────────────────────────────────────────────────┘         │
 │                                                                         │
 │  ┌────────────────────────────────────────────────────────────┐         │
-│  │ STEP 4: UPDATE I18N FILES (OPTIONAL)                       │         │
+│  │ IF /api/scrape-translate-score (with languages):           │         │
+│  │ STEP 3: TRANSLATE METADATA (OPTIMIZED)                     │         │
 │  │ ┌────────────────────────────────────────────────────┐     │         │
 │  │ │ updateI18nFiles()                                  │     │         │
 │  │ │ • Write translations to frontend/i18n/             │     │         │
@@ -155,12 +174,22 @@
 │  │ └────────────────────────────────────────────────────┘     │         │
 │  └────────────────────────────────────────────────────────────┘         │
 │                                                                         │
-│  Return: {                                                              │
+│  Return based on endpoint:                                              │
+│                                                                         │
+│  IF /api/scrape-translate-score:                                        │
+│  {                                                                      │
 │    success: true,                                                       │
 │    metadata,                                                            │
 │    translations,                                                        │
 │    seoScore,                                                            │
 │    targetLanguages: ['es', 'fr']                                        │
+│  }                                                                      │
+│                                                                         │
+│  IF /api/scrape-and-score:                                              │
+│  {                                                                      │
+│    success: true,                                                       │
+│    metadata,                                                            │
+│    seoScore                                                             │
 │  }                                                                      │
 └─────────────────────────────────────────────────────────────────────────┘
                                     │
@@ -171,8 +200,9 @@
 │  1. Receive response                                                    │
 │  2. Store in state:                                                     │
 │     - setMetadata(result.metadata)                                      │
-│     - setTranslations(result.translations)                              │
 │     - setSeoScore(result.seoScore)                                      │
+│     - IF translations exist: setTranslations(result.translations)       │
+│       ELSE: setTranslations({})                                         │
 │  3. Pass to OutputPanel                                                 │
 └─────────────────────────────────────────────────────────────────────────┘
                                     │
@@ -232,11 +262,12 @@
 │                           USER SEES RESULTS                             │
 ├─────────────────────────────────────────────────────────────────────────┤
 │  ✓ Original metadata in English                                         │
-│  ✓ Translated metadata in Spanish                                       │
-│  ✓ Translated metadata in French                                        │
 │  ✓ SEO quality score                                                    │
 │  ✓ Smart rewrite suggestions                                            │
 │  ✓ Ready-to-use HTML/JSON code                                          │
+│                                                                         │
+│  IF translations were requested:                                        │
+│  ✓ Translated metadata in selected languages                            │
 └─────────────────────────────────────────────────────────────────────────┘
 
 
@@ -253,16 +284,22 @@ TRANSLATION OPTIMIZATIONS:
 API ENDPOINTS:
 ══════════════
 
-- `POST /api/scrape` - Scrape only
-- `POST /api/translate` - Scrape + translate only
-- `POST /api/seo-score` - Score existing metadata
-- `POST /api/scrape-translate-score` - Complete pipeline (used by frontend)
+- `GET /api/health` - Health check with cache stats and API key status
+- `POST /api/scrape` - Scrape metadata only
+- `POST /api/translate` - Scrape + translate metadata only
+- `POST /api/seo-score` - Generate SEO score for existing metadata
+- `POST /api/scrape-and-score` - Scrape + generate SEO score
+- `POST /api/scrape-translate-score` - Complete pipeline (scrape + translate + score)
+- `GET /api/cache/stats` - Get cache statistics
+- `POST /api/cache/clear` - Clear cache
 
 CACHE STRATEGY:
 ═══════════════
 
-- **Cache Key**: Hash of (content + source_lang + target_langs + host)
-- **Storage**: File-based cache in backend/cache/
-- **TTL**: Configurable expiration
+- **Primary Storage**: Redis for high-performance, scalable caching
+- **Fallback Storage**: In-memory Map for development/local use
+- **Cache Key**: Hash of (content + source_lang + target_langs + host + primaryKeyword)
+- **TTL**: Configurable expiration (default: 24 hours)
 - **Optimization**: Partial matches allow incremental translation
+- **Connection**: Automatic fallback if Redis is unavailable
 ```
