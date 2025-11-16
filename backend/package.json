@@ -7,7 +7,7 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "npm run install-browsers && node server.js",
     "dev": "node --watch server.js",
     "scrape": "node scraper.js",
     "scrape-score": "node scraper.js --score",

@@ -102,8 +102,11 @@ export default function App() {
       try {
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api'}/health`);
         if (response.ok) {
-          const data = await response.json();
-          setApiKeysConfigured(data.apiKeys || { gemini: false, lingo: false });
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const data = await response.json();
+            setApiKeysConfigured(data.apiKeys || { gemini: false, lingo: false });
+          }
         }
       } catch (error) {
         console.warn('Failed to check API key configuration:', error);

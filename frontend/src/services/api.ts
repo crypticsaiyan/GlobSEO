@@ -1,5 +1,13 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
+// Log API configuration in development
+if (import.meta.env.DEV) {
+  console.log('API Base URL:', API_BASE_URL);
+  if (!import.meta.env.VITE_API_BASE_URL) {
+    console.warn('VITE_API_BASE_URL not set, using default localhost:3001/api');
+  }
+}
+
 export interface SEOScores {
   title_quality: number;
   description_quality: number;
@@ -93,6 +101,17 @@ export interface TranslateResponse {
 
 class APIService {
   /**
+   * Helper method to safely parse JSON responses
+   */
+  private async parseJSONResponse<T>(response: Response): Promise<T> {
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error(`Expected JSON response but got ${contentType || 'unknown content-type'}`);
+    }
+    return response.json();
+  }
+
+  /**
    * Scrape metadata from a URL
    */
   async scrape(url: string): Promise<Metadata> {
@@ -104,11 +123,18 @@ class APIService {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Unknown error' }));
-        throw new Error(`Scrape failed: ${error.message || 'Failed to scrape URL'}`);
+        let errorMessage = 'Unknown error';
+        try {
+          const errorData = await this.parseJSONResponse<any>(response);
+          errorMessage = errorData.message || errorData.error || 'Unknown error';
+        } catch {
+          // If we can't parse the error response, use the status text
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(`Scrape failed: ${errorMessage}`);
       }
 
-      const data = await response.json();
+      const data = await this.parseJSONResponse<{ metadata: Metadata }>(response);
       return data.metadata;
     } catch (error) {
       if (error instanceof TypeError && error.message.includes('fetch')) {
@@ -130,11 +156,17 @@ class APIService {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Unknown error' }));
-        throw new Error(`Scrape and score failed: ${error.message || 'Failed to scrape and score'}`);
+        let errorMessage = 'Unknown error';
+        try {
+          const errorData = await this.parseJSONResponse<any>(response);
+          errorMessage = errorData.message || errorData.error || 'Unknown error';
+        } catch {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(`Scrape and score failed: ${errorMessage}`);
       }
 
-      return response.json();
+      return this.parseJSONResponse<ScrapeAndScoreResponse>(response);
     } catch (error) {
       if (error instanceof TypeError && error.message.includes('fetch')) {
         throw new Error(`Network error during scrape-and-score: Cannot connect to ${API_BASE_URL}/scrape-and-score. Is the backend running?`);
@@ -167,11 +199,17 @@ class APIService {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to complete pipeline');
+        let errorMessage = 'Unknown error';
+        try {
+          const errorData = await this.parseJSONResponse<any>(response);
+          errorMessage = errorData.message || errorData.error || 'Unknown error';
+        } catch {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage || 'Failed to complete pipeline');
       }
 
-      return response.json();
+      return this.parseJSONResponse<ScrapeTranslateScoreResponse>(response);
     } catch (error) {
       clearTimeout(timeoutId);
       if (error instanceof Error && error.name === 'AbortError') {
@@ -205,11 +243,17 @@ class APIService {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Unknown error' }));
-        throw new Error(`SEO score generation failed: ${error.message || 'Failed to generate SEO score'}`);
+        let errorMessage = 'Unknown error';
+        try {
+          const errorData = await this.parseJSONResponse<any>(response);
+          errorMessage = errorData.message || errorData.error || 'Unknown error';
+        } catch {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(`SEO score generation failed: ${errorMessage}`);
       }
 
-      return response.json();
+      return this.parseJSONResponse<{ success: boolean; analysis: SEOAnalysis }>(response);
     } catch (error) {
       if (error instanceof TypeError && error.message.includes('fetch')) {
         throw new Error(`Network error during seo-score: Cannot connect to ${API_BASE_URL}/seo-score. Is the backend running?`);
@@ -230,11 +274,17 @@ class APIService {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Unknown error' }));
-        throw new Error(`Translation failed: ${error.message || 'Failed to translate'}`);
+        let errorMessage = 'Unknown error';
+        try {
+          const errorData = await this.parseJSONResponse<any>(response);
+          errorMessage = errorData.message || errorData.error || 'Unknown error';
+        } catch {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(`Translation failed: ${errorMessage}`);
       }
 
-      return response.json();
+      return this.parseJSONResponse<TranslateResponse>(response);
     } catch (error) {
       if (error instanceof TypeError && error.message.includes('fetch')) {
         throw new Error(`Network error during translate: Cannot connect to ${API_BASE_URL}/translate. Is the backend running?`);
@@ -254,7 +304,7 @@ class APIService {
         throw new Error('Failed to fetch languages');
       }
 
-      const data = await response.json();
+      const data = await this.parseJSONResponse<{ supported: Array<{ code: string; name: string; native: string }> }>(response);
       return data.supported;
     } catch (error) {
       if (error instanceof TypeError && error.message.includes('fetch')) {
@@ -270,7 +320,7 @@ class APIService {
   async health(): Promise<{ status: string; message: string }> {
     try {
       const response = await fetch(`${API_BASE_URL}/health`);
-      return response.json();
+      return this.parseJSONResponse<{ status: string; message: string }>(response);
     } catch (error) {
       if (error instanceof TypeError && error.message.includes('fetch')) {
         throw new Error(`Network error during health check: Cannot connect to ${API_BASE_URL}/health. Is the backend running?`);
