@@ -180,8 +180,13 @@ IMPORTANT FOR SMART REWRITES:
 
     log.info('Analyzing SEO quality with Gemini AI...');
 
-    // Generate content
-    const result = await model.generateContent(prompt);
+    // Generate content with timeout
+    const resultPromise = model.generateContent(prompt);
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Gemini API request timeout after 30 seconds')), 30000);
+    });
+
+    const result = await Promise.race([resultPromise, timeoutPromise]);
     const response = await result.response;
     const text = response.text();
 

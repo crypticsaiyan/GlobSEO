@@ -91,6 +91,49 @@ export async function scrapeMetadata(url, options = {}) {
     if (includeContent) {
       metadata.content = extractContent($);
     }
+
+    // Heuristic language detection from content when html/lang is unreliable
+    // Some sites (e.g., social platforms) may set <html lang="en"> but serve
+    // localized content (Devanagari for Hindi, Han for Chinese, etc.). Use
+    // quick script checks to adjust detected language so translations are
+    // triggered correctly.
+    try {
+      const contentSample = (metadata.content || '').slice(0, 2000);
+      function detectLangFromScript(text) {
+        if (!text || text.trim().length === 0) return null;
+
+        // Devanagari (Hindi, Marathi, Nepali)
+        if (/[\u0900-\u097F]/.test(text)) return 'hi';
+
+        // Han characters (Chinese)
+        if (/[\u4E00-\u9FFF]/.test(text)) return 'zh';
+
+        // Cyrillic (Russian, Ukrainian, etc.)
+        if (/[\u0400-\u04FF]/.test(text)) return 'ru';
+
+        // Arabic
+        if (/[\u0600-\u06FF]/.test(text)) return 'ar';
+
+        // Devanagari fallback for Indic punctuation/spaces
+        try {
+          if (/\p{Script=Devanagari}/u.test(text)) return 'hi';
+        } catch (e) {
+          // ignore if environment doesn't support Unicode property escapes
+        }
+
+        return null;
+      }
+
+      const scriptLang = detectLangFromScript(contentSample);
+      if (scriptLang && (!metadata.language || metadata.language === 'en' || (typeof metadata.language === 'string' && metadata.language.startsWith('en-')))) {
+        metadata.language = scriptLang;
+        metadata.lang = scriptLang;
+        // Log a debug message so it's visible in the server logs
+        console.log(`[lang-detect] Overriding detected language to: ${scriptLang} based on content script`);
+      }
+    } catch (e) {
+      // Non-fatal - proceed with existing metadata.language
+    }
     
     await browser.close();
     return metadata;

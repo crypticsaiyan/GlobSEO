@@ -139,18 +139,32 @@ class APIService {
     lingoApiKey?: string,
     geminiApiKey?: string
   ): Promise<ScrapeTranslateScoreResponse> {
-    const response = await fetch(`${API_BASE_URL}/scrape-translate-score`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, languages, primaryKeyword, lingoApiKey, geminiApiKey })
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to complete pipeline');
+    try {
+      const response = await fetch(`${API_BASE_URL}/scrape-translate-score`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, languages, primaryKeyword, lingoApiKey, geminiApiKey }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to complete pipeline');
+      }
+
+      return response.json();
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request timed out. The analysis is taking longer than expected.');
+      }
+      throw error;
     }
-
-    return response.json();
   }
 
   /**

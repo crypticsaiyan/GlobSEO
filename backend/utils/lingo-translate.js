@@ -5,7 +5,7 @@
  * This script integrates with the frontend to translate scraped metadata
  */
 
-import { execSync } from 'child_process';
+import { exec } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -108,13 +108,21 @@ async function translateWithLingo(content, sourceLang, targetLang, lingoApiKey) 
 
     // Run Lingo.dev CLI in temp directory
     try {
-      execSync('npx lingo.dev@latest run', {
-        stdio: 'inherit',
-        cwd: tempDir,
-        env: {
-          ...process.env,
-          LINGODOTDEV_API_KEY: lingoApiKey || process.env.LINGODOTDEV_API_KEY
-        }
+      await new Promise((resolve, reject) => {
+        exec('npx lingo.dev@latest run', {
+          stdio: 'inherit',
+          cwd: tempDir,
+          env: {
+            ...process.env,
+            LINGODOTDEV_API_KEY: lingoApiKey || process.env.LINGODOTDEV_API_KEY
+          }
+        }, (error, stdout, stderr) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve({ stdout, stderr });
+          }
+        });
       });
 
       // Read translated content
@@ -299,13 +307,21 @@ async function processMetadataTranslations(metadata, targetLanguages, lingoApiKe
     log.info(`Running Lingo.dev translation (this runs ONCE for ${missingLanguages.length} languages)...`);
 
     try {
-      execSync('npx lingo.dev@latest run', {
-        cwd: tempDir,
-        stdio: 'inherit', // Show output in real-time
-        env: {
-          ...process.env,
-          LINGODOTDEV_API_KEY: lingoApiKey || process.env.LINGODOTDEV_API_KEY
-        }
+      await new Promise((resolve, reject) => {
+        exec('npx lingo.dev@latest run', {
+          cwd: tempDir,
+          stdio: 'inherit', // Show output in real-time
+          env: {
+            ...process.env,
+            LINGODOTDEV_API_KEY: lingoApiKey || process.env.LINGODOTDEV_API_KEY
+          }
+        }, (error, stdout, stderr) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve({ stdout, stderr });
+          }
+        });
       });
 
       // Read all translated languages from temp directory

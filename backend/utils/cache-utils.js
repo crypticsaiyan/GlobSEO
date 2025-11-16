@@ -5,13 +5,17 @@
  * Uses Redis for high-performance, scalable caching
  */
 
+import dotenv from 'dotenv';
+dotenv.config();
+
 import crypto from 'crypto';
-import { createClient } from 'redis';
+import { Redis } from '@upstash/redis';
 
 import { log, colors } from './logger.js';
 
 // Redis configuration
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+const UPSTASH_REDIS_REST_URL = process.env.UPSTASH_REDIS_REST_URL;
+const UPSTASH_REDIS_REST_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 const CACHE_EXPIRY_SECONDS = parseInt(process.env.CACHE_EXPIRY_SECONDS) || (24 * 60 * 60); // 24 hours default
 const CACHE_KEY_PREFIX = 'globseo:translation:';
 
@@ -24,66 +28,29 @@ const memoryCache = new Map(); // Fallback in-memory cache
  * Initialize Redis connection
  */
 async function initializeRedis() {
-  if (redisClient && !useInMemoryFallback) return redisClient;
+  if (redisClient) return redisClient;
 
-  if (useInMemoryFallback) {
-    return null;
-  }
-
-  // For development/testing, check if Redis environment variable is set
-  if (!process.env.REDIS_URL || process.env.REDIS_URL === 'redis://localhost:6379') {
-    // Try a quick connection test
+  // Check if Upstash credentials are provided
+  if (UPSTASH_REDIS_REST_URL && UPSTASH_REDIS_REST_TOKEN) {
     try {
-      const testClient = createClient({
-        url: REDIS_URL,
-        socket: { connectTimeout: 1000 }
+      redisClient = new Redis({
+        url: UPSTASH_REDIS_REST_URL,
+        token: UPSTASH_REDIS_REST_TOKEN,
       });
-
-      await Promise.race([
-        testClient.connect(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Connection timeout')), 1000)
-        )
-      ]);
-
-      await testClient.quit();
-      log.success('Redis is available, using Redis cache');
+      // Don't ping here, let operations handle connection
+      log.success('Upstash Redis client initialized');
+      return redisClient;
     } catch (error) {
-      log.warning('Redis not available, using in-memory cache fallback');
+      log.error(`Upstash Redis client creation failed: ${error.message}`);
       useInMemoryFallback = true;
       return null;
     }
   }
 
-  try {
-    redisClient = createClient({
-      url: REDIS_URL,
-      socket: {
-        connectTimeout: 5000,
-        lazyConnect: true,
-      }
-    });
-
-    redisClient.on('error', (err) => {
-      console.error('Redis Client Error:', err.message);
-    });
-
-    redisClient.on('connect', () => {
-      log.success('Connected to Redis');
-    });
-
-    redisClient.on('ready', () => {
-      log.success('Redis client ready');
-    });
-
-    await redisClient.connect();
-    return redisClient;
-  } catch (error) {
-    console.error('Failed to initialize Redis:', error.message);
-    console.warn('Falling back to in-memory cache');
-    useInMemoryFallback = true;
-    return null;
-  }
+  // Fallback to local Redis if Upstash not configured
+  log.warning('Redis not configured, using in-memory cache fallback');
+  useInMemoryFallback = true;
+  return null;
 }
 
 /**
@@ -94,7 +61,11 @@ async function initializeRedis() {
  * @returns {string} - Redis cache key
  */
 export function getCacheKey(content, sourceLang, targetLangs) {
-  const normalizedContent = JSON.stringify(content);
+  // Create a copy of content without timestamp for consistent caching
+  const contentForKey = { ...content };
+  delete contentForKey.timestamp;
+
+  const normalizedContent = JSON.stringify(contentForKey);
   const sortedTargets = [...targetLangs].sort().join(',');
   const cacheString = `${sourceLang}:${sortedTargets}:${normalizedContent}`;
 
@@ -157,7 +128,7 @@ export async function getCachedTranslation(cacheKey) {
       return null;
     }
 
-    const entry = JSON.parse(cachedData);
+    const entry = cachedData;
 
     // Check if entry has expired (double-check in case Redis TTL failed)
     if (entry.timestamp && (Date.now() - entry.timestamp) > (CACHE_EXPIRY_SECONDS * 1000)) {
@@ -204,7 +175,8 @@ export async function setCachedTranslation(cacheKey, translations, targetLanguag
     };
 
     const redisKey = getRedisKey(cacheKey);
-    await client.setEx(redisKey, CACHE_EXPIRY_SECONDS, JSON.stringify(entry));
+    await client.set(redisKey, entry);
+    await client.expire(redisKey, CACHE_EXPIRY_SECONDS);
 
     log.cache(`SET (redis) for key: ${cacheKey.substring(0, 8)}...`);
   } catch (error) {
@@ -287,17 +259,25 @@ export async function getCacheStats() {
     const keys = await client.keys(`${CACHE_KEY_PREFIX}*`);
     const totalEntries = keys.length;
 
-    const info = await client.info('memory');
-    const memoryUsage = parseInt(info.match(/used_memory:(\d+)/)?.[1] || 0);
+    // Try to get memory info, but handle if not available (Upstash doesn't support INFO)
+    let memoryUsage = 'N/A (Upstash)';
+    try {
+      const info = await client.info('memory');
+      const memBytes = parseInt(info.match(/used_memory:(\d+)/)?.[1] || 0);
+      memoryUsage = `${(memBytes / 1024 / 1024).toFixed(2)} MB`;
+    } catch (infoError) {
+      // INFO command not available in Upstash Redis
+      log.debug('Memory info not available (Upstash Redis limitation)');
+    }
 
     return {
       totalEntries,
       validEntries: totalEntries, // Redis handles expiry
       expiredEntries: 0, // Redis handles expiry
-      cacheSize: `${(memoryUsage / 1024 / 1024).toFixed(2)} MB`,
+      cacheSize: memoryUsage,
       redisConnected: true,
-      cacheType: 'redis',
-      redisUrl: REDIS_URL
+      cacheType: 'upstash-redis',
+      redisUrl: UPSTASH_REDIS_REST_URL
     };
   } catch (error) {
     console.error('Error getting cache stats:', error.message);
@@ -317,26 +297,33 @@ export async function getCacheStats() {
  * Clear all cache
  */
 export async function clearCache() {
+  // Clear in-memory cache always
+  const memorySize = memoryCache.size;
+  memoryCache.clear();
+  if (memorySize > 0) {
+    log.success(`Cleared ${memorySize} entries from in-memory cache`);
+  }
+
+  // Try to clear Redis cache if client is available
   try {
     const client = await initializeRedis();
-
-    if (!client || useInMemoryFallback) {
-      // Clear in-memory cache
-      memoryCache.clear();
-      log.success(`Cleared ${memoryCache.size} entries from in-memory cache`);
-      return;
-    }
-
-    // Clear Redis cache
-    const keys = await client.keys(`${CACHE_KEY_PREFIX}*`);
-    if (keys.length > 0) {
-      await client.del(keys);
-      log.success(`Cleared ${keys.length} entries from Redis cache`);
+    if (client) {
+      const keys = await client.keys(`${CACHE_KEY_PREFIX}*`);
+      console.log(`Found ${keys.length} Redis keys to clear:`, keys);
+      if (keys.length > 0) {
+        // Delete keys one by one to ensure compatibility
+        for (const key of keys) {
+          await client.del(key);
+        }
+        log.success(`Cleared ${keys.length} entries from Redis cache`);
+      } else {
+        log.info('Redis cache already empty');
+      }
     } else {
-      log.info('Redis cache already empty');
+      log.info('Redis client not available');
     }
   } catch (error) {
-    console.error('Error clearing cache:', error.message);
+    console.error('Error clearing Redis cache:', error.message);
   }
 }
 

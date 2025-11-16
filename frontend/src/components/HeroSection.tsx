@@ -49,7 +49,7 @@ export function HeroSection() {
               </div>
               <div className="w-px h-12 bg-white/10"></div>
               <div>
-                <div className="text-2xl text-white/90">&lt;5s</div>
+                <div className="text-2xl text-white/90">&lt;30s</div>
                 <div className="text-sm text-white/40">Response</div>
               </div>
             </div>

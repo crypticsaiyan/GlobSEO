@@ -564,4 +564,24 @@ app.listen(PORT, () => {
   console.log('');
 });
 
+/**
+ * POST /api/clear-cache
+ * Clear all cached translations
+ * 
+ * Returns: { success: boolean, message: string }
+ */
+app.post('/api/clear-cache', async (req, res) => {
+  try {
+    await clearCache();
+    res.json({ success: true, message: 'Cache cleared successfully' });
+  } catch (error) {
+    console.error('Cache clear error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to clear cache',
+      message: error.message
+    });
+  }
+});
+
 export default app;
