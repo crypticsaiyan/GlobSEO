@@ -8,7 +8,7 @@ GlobSEO analyzes website metadata, translates it to multiple languages using the
 
 - **Metadata Extraction**: Scrapes title, description, keywords, Open Graph tags, and Twitter Card data from web pages
 - **Multi-language Translation**: Translates metadata using Lingo.dev's translation service (optional)
-- **Supported Languages**: 15+ languages including Spanish, French, German, Italian, Portuguese, Japanese, Korean, Chinese, Arabic, Russian, Dutch, Polish, Turkish, Swedish, and Danish
+- **Supported Languages**: 60+ languages including Spanish, French, German, Italian, Portuguese, Japanese, Korean, Chinese, Arabic, Russian, Dutch, Polish, Turkish, Swedish, and Danish
 - **Smart Rewrite Suggestions**: AI-powered content improvement recommendations
 - **Schema Markup Generation**: Automatic generation of structured data markup
 - **Social Card Previews**: Live previews of how content appears on social media platforms
